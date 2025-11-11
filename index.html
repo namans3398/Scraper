@@ -9,27 +9,40 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Scraper</h1>
-    </header>
-
-    <div class="input-section">
-      <input 
-        type="text" 
-        id="urlInput" 
-        placeholder="Paste YouTube URL here..."
-        autocomplete="off"
-      >
-      <button id="fetchBtn">Get Video Info</button>
+    <div id="homeScreen" class="home-screen">
+      <h1 class="home-title">Scraper</h1>
+      <div class="home-input-section">
+        <input 
+          type="text" 
+          id="urlInput" 
+          placeholder="Paste YouTube URL here..."
+          autocomplete="off"
+        >
+        <button id="fetchBtn">Get Video Info</button>
+      </div>
     </div>
 
-    <div class="main-content">
-      <div id="loading" class="loading hidden">
-        <div class="spinner"></div>
-        <p>Fetching video information...</p>
-      </div>
+    <div id="mainApp" class="main-app hidden">
+      <header>
+        <h1>Scraper</h1>
+        <div class="header-search">
+          <input 
+            type="text" 
+            id="headerUrlInput" 
+            placeholder="Paste YouTube URL here..."
+            autocomplete="off"
+          >
+          <button id="headerFetchBtn">Get Video Info</button>
+        </div>
+      </header>
 
-      <div id="videoInfo" class="video-info hidden">
+        <div class="main-content">
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <p>Fetching video information...</p>
+        </div>
+
+        <div id="videoInfo" class="video-info hidden">
         <div class="left-panel">
           <div class="video-preview-container">
             <div class="video-preview">
@@ -92,7 +105,8 @@
         </div>
       </div>
 
-      <div id="error" class="error hidden"></div>
+        <div id="error" class="error hidden"></div>
+      </div>
     </div>
   </div>
 

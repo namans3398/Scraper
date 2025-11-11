@@ -34,34 +34,191 @@ body {
 }
 
 .container {
+  height: 100vh;
+  background: #000000;
+}
+
+/* Home Screen */
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 40px;
+}
+
+.home-title {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  color: var(--text-primary);
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.home-input-section {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 700px;
+}
+
+.home-input-section #urlInput {
+  flex: 1;
+  padding: 18px 24px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.home-input-section #urlInput:hover {
+  border-color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-input-section #urlInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.home-input-section #urlInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.home-input-section button {
+  padding: 18px 36px;
+  background: var(--accent-color);
+  color: #000000;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.home-input-section button:hover:not(:disabled) {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+}
+
+.home-input-section button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Main App */
+.main-app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: var(--bg-primary);
 }
 
+.main-app.hidden {
+  display: none;
+}
+
 header {
   background: var(--bg-primary);
   color: var(--text-primary);
-  padding: 20px 32px;
+  padding: 16px 32px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 header h1 {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.input-section {
-  padding: 20px 32px;
+header h1:hover {
+  opacity: 0.7;
+}
+
+.header-search {
+  flex: 1;
   display: flex;
   gap: 12px;
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-  background: var(--bg-primary);
+  max-width: 800px;
 }
+
+.header-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.header-search input:hover {
+  border-color: var(--text-tertiary);
+}
+
+.header-search input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.header-search input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.header-search button {
+  padding: 10px 24px;
+  background: var(--accent-color);
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-search button:hover:not(:disabled) {
+  background: #e0e0e0;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.header-search button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.header-search button:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Remove old input section styles - now handled by home screen */
 
 #urlInput {
   flex: 1;

@@ -6,6 +6,8 @@ let progressCleanup = null;
 
 const urlInput = document.getElementById('urlInput');
 const fetchBtn = document.getElementById('fetchBtn');
+const headerUrlInput = document.getElementById('headerUrlInput');
+const headerFetchBtn = document.getElementById('headerFetchBtn');
 const loading = document.getElementById('loading');
 const videoInfo = document.getElementById('videoInfo');
 const error = document.getElementById('error');
@@ -30,30 +32,39 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Fetch video info
-fetchBtn.addEventListener('click', async () => {
-  const url = sanitizeInput(urlInput.value);
+// Fetch video info function
+async function fetchVideoInfo(url, fromHeader = false) {
+  const sanitizedUrl = sanitizeInput(url);
   
-  if (!url) {
+  if (!sanitizedUrl) {
     showError('Please enter a YouTube URL');
     return;
   }
   
   // Basic URL validation
   try {
-    new URL(url);
+    new URL(sanitizedUrl);
   } catch {
     showError('Please enter a valid URL');
     return;
+  }
+  
+  // Switch to main app view if coming from home
+  if (!fromHeader) {
+    document.getElementById('homeScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    // Sync the URL to header input
+    headerUrlInput.value = sanitizedUrl;
   }
   
   hideError();
   hideVideoInfo();
   showLoading();
   fetchBtn.disabled = true;
+  headerFetchBtn.disabled = true;
   
   try {
-    const data = await window.electronAPI.getVideoInfo(url);
+    const data = await window.electronAPI.getVideoInfo(sanitizedUrl);
     currentVideoData = data;
     displayVideoInfo(data);
     hideLoading();
@@ -62,7 +73,18 @@ fetchBtn.addEventListener('click', async () => {
     showError(err.error || 'Failed to fetch video information. Make sure yt-dlp is installed.');
   } finally {
     fetchBtn.disabled = false;
+    headerFetchBtn.disabled = false;
   }
+}
+
+// Home screen fetch button
+fetchBtn.addEventListener('click', () => {
+  fetchVideoInfo(urlInput.value, false);
+});
+
+// Header fetch button
+headerFetchBtn.addEventListener('click', () => {
+  fetchVideoInfo(headerUrlInput.value, true);
 });
 
 // Allow Enter key to fetch video info
@@ -71,6 +93,16 @@ urlInput.addEventListener('keypress', (e) => {
     fetchBtn.click();
   }
 });
+
+// Allow Enter key in header search
+headerUrlInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !headerFetchBtn.disabled) {
+    headerFetchBtn.click();
+  }
+});
+
+// Click logo to go back home
+document.querySelector('header h1').addEventListener('click', goBackToHome);
 
 // Display video information
 function displayVideoInfo(data) {
@@ -397,4 +429,15 @@ function hideError() {
 function hideVideoInfo() {
   videoInfo.classList.add('hidden');
   downloadProgress.classList.add('hidden');
+}
+
+// Add back button functionality
+function goBackToHome() {
+  document.getElementById('homeScreen').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('hidden');
+  urlInput.value = '';
+  headerUrlInput.value = '';
+  hideVideoInfo();
+  hideError();
+  hideLoading();
 }
