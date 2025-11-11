@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
-  <title>YouTube Downloader</title>
+  <title>Scraper</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>YouTube Downloader</h1>
+      <h1>Scraper</h1>
     </header>
 
     <div class="input-section">
@@ -23,67 +23,77 @@
       <button id="fetchBtn">Get Video Info</button>
     </div>
 
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      <p>Fetching video information...</p>
-    </div>
+    <div class="main-content">
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Fetching video information...</p>
+      </div>
 
-    <div id="videoInfo" class="video-info hidden">
-      <div class="video-preview">
-        <img id="thumbnail" src="" alt="Video thumbnail">
-        <div class="video-details">
-          <h2 id="title"></h2>
-          <p class="channel" id="channel"></p>
-          <div class="video-meta">
-            <span id="duration"></span>
-            <span class="separator">•</span>
-            <span id="views"></span>
-            <span class="separator" id="likesSeparator">•</span>
-            <span id="likes"></span>
-            <span class="separator" id="dateSeparator">•</span>
-            <span id="uploadDate"></span>
+      <div id="videoInfo" class="video-info hidden">
+        <div class="left-panel">
+          <div class="video-preview-container">
+            <div class="video-preview">
+              <img id="thumbnail" src="" alt="Video thumbnail">
+              <div class="video-details">
+                <h2 id="title"></h2>
+                <p class="channel" id="channel"></p>
+                <div class="video-meta">
+                  <span id="duration"></span>
+                  <span class="separator">•</span>
+                  <span id="views"></span>
+                  <span class="separator" id="likesSeparator">•</span>
+                  <span id="likes"></span>
+                  <span class="separator" id="dateSeparator">•</span>
+                  <span id="uploadDate"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="video-metadata-container">
+            <div class="video-description-section" id="descriptionSection">
+              <button class="description-toggle" id="descriptionToggle">
+                <span>Show Description</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="video-description hidden" id="description"></div>
+            </div>
+
+            <div class="video-tags-section" id="tagsSection">
+              <h3>Tags</h3>
+              <div class="tags-container" id="tags"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-panel">
+          <div class="formats-section">
+            <h3>Available Formats</h3>
+            <div id="formatsList" class="formats-list"></div>
+          </div>
+
+          <div class="download-section">
+            <div class="folder-select">
+              <input type="text" id="outputPath" placeholder="Select download folder..." readonly>
+              <button id="selectFolderBtn">Browse</button>
+            </div>
+            <div class="download-buttons">
+              <button id="downloadBtn" class="download-btn" disabled>Download</button>
+              <button id="cancelBtn" class="cancel-btn hidden">Cancel</button>
+            </div>
+          </div>
+
+          <div id="downloadProgress" class="download-progress hidden">
+            <h3>Download Progress</h3>
+            <div class="progress-output" id="progressOutput"></div>
           </div>
         </div>
       </div>
 
-      <div class="video-description-section" id="descriptionSection">
-        <button class="description-toggle" id="descriptionToggle">
-          <span>Show Description</span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="video-description hidden" id="description"></div>
-      </div>
-
-      <div class="video-tags-section" id="tagsSection">
-        <h3>Tags</h3>
-        <div class="tags-container" id="tags"></div>
-      </div>
-
-      <div class="formats-section">
-        <h3>Available Formats</h3>
-        <div id="formatsList" class="formats-list"></div>
-      </div>
-
-      <div class="download-section">
-        <div class="folder-select">
-          <input type="text" id="outputPath" placeholder="Select download folder..." readonly>
-          <button id="selectFolderBtn">Browse</button>
-        </div>
-        <div class="download-buttons">
-          <button id="downloadBtn" class="download-btn" disabled>Download</button>
-          <button id="cancelBtn" class="cancel-btn hidden">Cancel</button>
-        </div>
-      </div>
+      <div id="error" class="error hidden"></div>
     </div>
-
-    <div id="downloadProgress" class="download-progress hidden">
-      <h3>Download Progress</h3>
-      <div class="progress-output" id="progressOutput"></div>
-    </div>
-
-    <div id="error" class="error hidden"></div>
   </div>
 
   <script src="renderer.js"></script>

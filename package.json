@@ -1,7 +1,7 @@
 {
-  "name": "youtube-downloader",
+  "name": "scraper",
   "version": "1.0.0",
-  "description": "YouTube video downloader using yt-dlp",
+  "description": "Video scraper and downloader using yt-dlp",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -14,7 +14,9 @@
     "electron",
     "youtube",
     "downloader",
-    "yt-dlp"
+    "yt-dlp",
+    "scraper",
+    "video"
   ],
   "author": "",
   "license": "MIT",
@@ -23,8 +25,8 @@
     "electron-builder": "^24.6.4"
   },
   "build": {
-    "appId": "com.yourdomain.youtube-downloader",
-    "productName": "YouTube Downloader",
+    "appId": "com.yourdomain.scraper",
+    "productName": "Scraper",
     "directories": {
       "output": "dist"
     },

@@ -1,6 +1,6 @@
-# YouTube Video Downloader
+# Scraper
 
-A secure, production-ready Electron desktop application for downloading YouTube videos using yt-dlp.
+A secure, production-ready Electron desktop application for scraping and downloading YouTube videos using yt-dlp.
 
 ## Features
 
@@ -108,7 +108,7 @@ Built applications will be in the `dist/` folder.
 ## Project Structure
 
 ```
-youtube-downloader/
+scraper/
 ├── main.js           # Electron main process (secure IPC handlers)
 ├── preload.js        # Secure bridge between main and renderer
 ├── renderer.js       # UI logic with input validation
