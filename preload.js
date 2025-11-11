@@ -9,6 +9,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 // Security: Expose only specific, validated APIs to renderer process
 contextBridge.exposeInMainWorld("electronAPI", {
+  /**
+   * @param {string} url
+   */
   getVideoInfo: (url) => {
     // Validate input before sending to main process
     if (typeof url !== "string" || url.length > 2000) {
@@ -19,6 +22,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   selectFolder: () => ipcRenderer.invoke("select-folder"),
 
+  /**
+   * @param {object} data
+   */
   downloadVideo: (data) => {
     // Validate input structure
     if (!data || typeof data !== "object") {
@@ -36,12 +42,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   cancelDownload: () => ipcRenderer.invoke("cancel-download"),
 
+  /**
+   * @param {Function} callback
+   */
   onDownloadProgress: (callback) => {
     // Security: Validate callback is a function
     if (typeof callback !== "function") {
       throw new Error("Callback must be a function");
     }
 
+    /** @param {any} event @param {string} data */
     const subscription = (event, data) => {
       // Sanitize data before passing to callback
       if (typeof data === "string") {

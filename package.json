@@ -6,7 +6,11 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc",
+    "check": "npm run lint && npm run type-check",
+    "build": "npm run check && electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
@@ -34,8 +38,13 @@
   },
   "homepage": "https://github.com/yourusername/scraper#readme",
   "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@types/node": "24.10.0",
     "electron": "^39.1.2",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.6.4",
+    "eslint": "9.39.1",
+    "eslint-plugin-security": "3.0.1",
+    "typescript": "5.9.3"
   },
   "build": {
     "appId": "com.scraper.app",
@@ -62,7 +71,9 @@
       {
         "from": "Logo",
         "to": "Logo",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -71,11 +82,17 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "hardenedRuntime": true,
@@ -104,11 +121,16 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -124,15 +146,21 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "rpm",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Utility",

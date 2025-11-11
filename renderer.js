@@ -6,34 +6,85 @@
  */
 
 // Application state
-let currentVideoData = null;
+/** @type {any} */
+// eslint-disable-next-line no-unused-vars
+let _currentVideoData = null;
+/** @type {string | null} */
 let selectedFormat = null;
+/** @type {string | null} */
 let selectedOutputPath = null;
 let isDownloading = false;
+/** @type {Function | null} */
 let progressCleanup = null;
 
-const urlInput = document.getElementById("urlInput");
-const fetchBtn = document.getElementById("fetchBtn");
-const headerUrlInput = document.getElementById("headerUrlInput");
-const headerFetchBtn = document.getElementById("headerFetchBtn");
-const loading = document.getElementById("loading");
-const videoInfo = document.getElementById("videoInfo");
-const error = document.getElementById("error");
-const formatsList = document.getElementById("formatsList");
-const selectFolderBtn = document.getElementById("selectFolderBtn");
-const outputPath = document.getElementById("outputPath");
-const downloadBtn = document.getElementById("downloadBtn");
-const cancelBtn = document.getElementById("cancelBtn");
-const downloadProgress = document.getElementById("downloadProgress");
-const progressOutput = document.getElementById("progressOutput");
+/** @type {HTMLInputElement} */
+const urlInput = /** @type {HTMLInputElement} */ (
+  document.getElementById("urlInput")
+);
+/** @type {HTMLButtonElement} */
+const fetchBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("fetchBtn")
+);
+/** @type {HTMLInputElement} */
+const headerUrlInput = /** @type {HTMLInputElement} */ (
+  document.getElementById("headerUrlInput")
+);
+/** @type {HTMLButtonElement} */
+const headerFetchBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("headerFetchBtn")
+);
+/** @type {HTMLElement} */
+const loading = /** @type {HTMLElement} */ (document.getElementById("loading"));
+/** @type {HTMLElement} */
+const videoInfo = /** @type {HTMLElement} */ (
+  document.getElementById("videoInfo")
+);
+/** @type {HTMLElement} */
+const error = /** @type {HTMLElement} */ (document.getElementById("error"));
+/** @type {HTMLElement} */
+const formatsList = /** @type {HTMLElement} */ (
+  document.getElementById("formatsList")
+);
+/** @type {HTMLButtonElement} */
+const selectFolderBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("selectFolderBtn")
+);
+/** @type {HTMLInputElement} */
+const outputPath = /** @type {HTMLInputElement} */ (
+  document.getElementById("outputPath")
+);
+/** @type {HTMLButtonElement} */
+const downloadBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("downloadBtn")
+);
+/** @type {HTMLButtonElement} */
+const cancelBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("cancelBtn")
+);
+/** @type {HTMLElement} */
+const downloadProgress = /** @type {HTMLElement} */ (
+  document.getElementById("downloadProgress")
+);
+/** @type {HTMLElement} */
+const progressOutput = /** @type {HTMLElement} */ (
+  document.getElementById("progressOutput")
+);
 
 // Security: Input sanitization
+/**
+ * @param {any} input
+ * @returns {string}
+ */
 function sanitizeInput(input) {
   if (typeof input !== "string") return "";
   return input.trim().substring(0, 2000);
 }
 
 // Security: Escape HTML to prevent XSS
+/**
+ * @param {any} text
+ * @returns {string}
+ */
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -41,6 +92,10 @@ function escapeHtml(text) {
 }
 
 // Fetch video info function
+/**
+ * @param {string} url
+ * @param {boolean} fromHeader
+ */
 async function fetchVideoInfo(url, fromHeader = false) {
   const sanitizedUrl = sanitizeInput(url);
 
@@ -73,13 +128,13 @@ async function fetchVideoInfo(url, fromHeader = false) {
 
   try {
     const data = await window.electronAPI.getVideoInfo(sanitizedUrl);
-    currentVideoData = data;
+    _currentVideoData = data;
     displayVideoInfo(data);
     hideLoading();
   } catch (err) {
     hideLoading();
     showError(
-      err.error ||
+      (err && typeof err === "object" && "error" in err ? err.error : null) ||
         "Failed to fetch video information. Make sure yt-dlp is installed."
     );
   } finally {
@@ -116,17 +171,39 @@ headerUrlInput.addEventListener("keypress", (e) => {
 document.querySelector("header h1").addEventListener("click", goBackToHome);
 
 // Display video information
+/**
+ * @param {any} data
+ */
 function displayVideoInfo(data) {
   // Security: Sanitize all displayed data
-  const thumbnail = document.getElementById("thumbnail");
-  const title = document.getElementById("title");
-  const channel = document.getElementById("channel");
-  const duration = document.getElementById("duration");
-  const views = document.getElementById("views");
-  const likes = document.getElementById("likes");
-  const uploadDate = document.getElementById("uploadDate");
-  const description = document.getElementById("description");
-  const tags = document.getElementById("tags");
+  /** @type {HTMLImageElement} */
+  const thumbnail = /** @type {HTMLImageElement} */ (
+    document.getElementById("thumbnail")
+  );
+  /** @type {HTMLElement} */
+  const title = /** @type {HTMLElement} */ (document.getElementById("title"));
+  /** @type {HTMLElement} */
+  const channel = /** @type {HTMLElement} */ (
+    document.getElementById("channel")
+  );
+  /** @type {HTMLElement} */
+  const duration = /** @type {HTMLElement} */ (
+    document.getElementById("duration")
+  );
+  /** @type {HTMLElement} */
+  const views = /** @type {HTMLElement} */ (document.getElementById("views"));
+  /** @type {HTMLElement} */
+  const likes = /** @type {HTMLElement} */ (document.getElementById("likes"));
+  /** @type {HTMLElement} */
+  const uploadDate = /** @type {HTMLElement} */ (
+    document.getElementById("uploadDate")
+  );
+  /** @type {HTMLElement} */
+  const description = /** @type {HTMLElement} */ (
+    document.getElementById("description")
+  );
+  /** @type {HTMLElement} */
+  const tags = /** @type {HTMLElement} */ (document.getElementById("tags"));
 
   // Validate thumbnail URL
   try {
@@ -191,8 +268,11 @@ function displayVideoInfo(data) {
 document
   .getElementById("descriptionToggle")
   .addEventListener("click", function () {
-    const description = document.getElementById("description");
-    const toggle = this;
+    /** @type {HTMLElement} */
+    const description = /** @type {HTMLElement} */ (
+      document.getElementById("description")
+    );
+    const toggle = /** @type {HTMLElement} */ (this);
     const isHidden = description.classList.contains("hidden");
 
     if (isHidden) {
@@ -207,6 +287,9 @@ document
   });
 
 // Display available formats
+/**
+ * @param {any[]} formats
+ */
 function displayFormats(formats) {
   formatsList.innerHTML = "";
 
@@ -227,6 +310,10 @@ function displayFormats(formats) {
   }
 }
 
+/**
+ * @param {string} title
+ * @param {any[]} formats
+ */
 function addFormatSection(title, formats) {
   const section = document.createElement("div");
   section.className = "format-section-header";
@@ -273,6 +360,10 @@ function addFormatSection(title, formats) {
 }
 
 // Select format
+/**
+ * @param {HTMLElement} element
+ * @param {any} format
+ */
 function selectFormat(element, format) {
   document.querySelectorAll(".format-item").forEach((item) => {
     item.classList.remove("selected");
@@ -326,7 +417,8 @@ downloadBtn.addEventListener("click", async () => {
     progressOutput.textContent += "\n✓ Download completed successfully!";
   } catch (err) {
     progressOutput.textContent += `\n✗ Error: ${escapeHtml(
-      err.error || "Unknown error"
+      (err && typeof err === "object" && "error" in err ? err.error : null) ||
+        "Unknown error"
     )}`;
   } finally {
     isDownloading = false;
@@ -358,12 +450,17 @@ cancelBtn.addEventListener("click", async () => {
     }
   } catch (err) {
     progressOutput.textContent += `\n✗ Error cancelling: ${escapeHtml(
-      err.error || "Unknown error"
+      (err && typeof err === "object" && "error" in err ? err.error : null) ||
+        "Unknown error"
     )}`;
   }
 });
 
 // Utility functions
+/**
+ * @param {number} seconds
+ * @returns {string}
+ */
 function formatDuration(seconds) {
   if (!seconds) return "Unknown";
   const h = Math.floor(seconds / 3600);
@@ -378,6 +475,10 @@ function formatDuration(seconds) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+/**
+ * @param {number} bytes
+ * @returns {string}
+ */
 function formatBytes(bytes) {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
@@ -386,6 +487,10 @@ function formatBytes(bytes) {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
+/**
+ * @param {number} count
+ * @returns {string}
+ */
 function formatViews(count) {
   if (!count || count === 0) return "0 views";
   if (count >= 1000000) {
@@ -397,6 +502,10 @@ function formatViews(count) {
   return count.toLocaleString() + " views";
 }
 
+/**
+ * @param {number} num
+ * @returns {string}
+ */
 function formatNumber(num) {
   if (!num || num === 0) return "0";
   if (num >= 1000000) {
@@ -408,16 +517,20 @@ function formatNumber(num) {
   return num.toLocaleString();
 }
 
+/**
+ * @param {string} dateString
+ * @returns {string}
+ */
 function formatUploadDate(dateString) {
   if (!dateString) return "";
   // Format: YYYYMMDD
-  const year = dateString.substring(0, 4);
-  const month = dateString.substring(4, 6);
-  const day = dateString.substring(6, 8);
+  const year = parseInt(dateString.substring(0, 4), 10);
+  const month = parseInt(dateString.substring(4, 6), 10);
+  const day = parseInt(dateString.substring(6, 8), 10);
 
   const date = new Date(year, month - 1, day);
   const now = new Date();
-  const diffTime = Math.abs(now - date);
+  const diffTime = Math.abs(now.getTime() - date.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 7) {
@@ -442,6 +555,9 @@ function hideLoading() {
   loading.classList.add("hidden");
 }
 
+/**
+ * @param {string} message
+ */
 function showError(message) {
   error.textContent = message;
   error.classList.remove("hidden");

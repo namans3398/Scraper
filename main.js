@@ -12,8 +12,9 @@ const path = require("path");
 const fs = require("fs");
 const { URL } = require("url");
 
-let mainWindow;
-let activeDownloads = new Map();
+/** @type {Electron.BrowserWindow | null} */
+let mainWindow = null;
+const activeDownloads = new Map();
 
 // Find yt-dlp executable path
 function getYtDlpPath() {
@@ -21,7 +22,7 @@ function getYtDlpPath() {
     "/opt/homebrew/bin/yt-dlp", // Apple Silicon Homebrew
     "/usr/local/bin/yt-dlp", // Intel Homebrew
     "/usr/bin/yt-dlp", // System install
-    path.join(process.env.HOME, ".local/bin/yt-dlp"), // User install
+    path.join(process.env.HOME || "/tmp", ".local/bin/yt-dlp"), // User install
   ];
 
   // Check common paths first
@@ -50,8 +51,6 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
       preload: path.join(__dirname, "preload.js"),
-      // Security: Disable remote module and node integration
-      enableRemoteModule: false,
       // Security: Disable web security features that could be exploited
       webSecurity: true,
       allowRunningInsecureContent: false,
@@ -113,6 +112,10 @@ app.on("activate", () => {
 });
 
 // Utility: Validate YouTube URL
+/**
+ * @param {string} urlString
+ * @returns {boolean}
+ */
 function isValidYouTubeUrl(urlString) {
   try {
     const url = new URL(urlString);
@@ -132,6 +135,10 @@ function isValidYouTubeUrl(urlString) {
 }
 
 // Utility: Sanitize file path
+/**
+ * @param {string} filePath
+ * @returns {string}
+ */
 function sanitizePath(filePath) {
   // Remove any potentially dangerous characters
   return path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, "");
@@ -141,8 +148,9 @@ function sanitizePath(filePath) {
 function checkYtDlpAvailable() {
   return new Promise((resolve) => {
     const ytdlpPath = getYtDlpPath();
-    exec(`"${ytdlpPath}" --version`, (error) => {
-      resolve(!error);
+    // eslint-disable-next-line security/detect-child-process
+    exec(`"${ytdlpPath}" --version`, (_error) => {
+      resolve(!_error);
     });
   });
 }
@@ -172,7 +180,6 @@ ipcMain.handle("get-video-info", async (event, url) => {
     const ytdlpPath = getYtDlpPath();
     const ytdlp = spawn(ytdlpPath, ["-J", "--no-warnings", url], {
       timeout: 30000, // 30 second timeout
-      maxBuffer: 1024 * 1024 * 10, // 10MB buffer
     });
 
     let stdout = "";
@@ -220,7 +227,7 @@ ipcMain.handle("get-video-info", async (event, url) => {
         } catch (e) {
           reject({
             error: "Failed to parse video information",
-            details: e.message,
+            details: e instanceof Error ? e.message : String(e),
           });
         }
       } else {
@@ -251,7 +258,8 @@ ipcMain.handle("select-folder", async () => {
     try {
       await fs.promises.access(selectedPath, fs.constants.W_OK);
       return selectedPath;
-    } catch (error) {
+      // eslint-disable-next-line no-unused-vars
+    } catch (_error) {
       throw { error: "Selected folder is not writable" };
     }
   }
