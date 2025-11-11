@@ -15,6 +15,26 @@ const { URL } = require("url");
 let mainWindow;
 let activeDownloads = new Map();
 
+// Find yt-dlp executable path
+function getYtDlpPath() {
+  const commonPaths = [
+    "/opt/homebrew/bin/yt-dlp", // Apple Silicon Homebrew
+    "/usr/local/bin/yt-dlp", // Intel Homebrew
+    "/usr/bin/yt-dlp", // System install
+    path.join(process.env.HOME, ".local/bin/yt-dlp"), // User install
+  ];
+
+  // Check common paths first
+  for (const ytdlpPath of commonPaths) {
+    if (fs.existsSync(ytdlpPath)) {
+      return ytdlpPath;
+    }
+  }
+
+  // Fall back to PATH lookup
+  return "yt-dlp";
+}
+
 // Security: Disable hardware acceleration if needed for compatibility
 // app.disableHardwareAcceleration();
 
@@ -120,7 +140,8 @@ function sanitizePath(filePath) {
 // Utility: Check if yt-dlp is available
 function checkYtDlpAvailable() {
   return new Promise((resolve) => {
-    exec("yt-dlp --version", (error) => {
+    const ytdlpPath = getYtDlpPath();
+    exec(`"${ytdlpPath}" --version`, (error) => {
       resolve(!error);
     });
   });
@@ -148,7 +169,8 @@ ipcMain.handle("get-video-info", async (event, url) => {
 
   return new Promise((resolve, reject) => {
     // Security: Use array format to prevent command injection
-    const ytdlp = spawn("yt-dlp", ["-J", "--no-warnings", url], {
+    const ytdlpPath = getYtDlpPath();
+    const ytdlp = spawn(ytdlpPath, ["-J", "--no-warnings", url], {
       timeout: 30000, // 30 second timeout
       maxBuffer: 1024 * 1024 * 10, // 10MB buffer
     });
@@ -273,6 +295,7 @@ ipcMain.handle(
       const outputTemplate = path.join(safePath, filename);
 
       // Security: Use array format to prevent command injection
+      const ytdlpPath = getYtDlpPath();
       const args = [
         "-f",
         formatId,
@@ -285,7 +308,7 @@ ipcMain.handle(
         url,
       ];
 
-      const ytdlp = spawn("yt-dlp", args, {
+      const ytdlp = spawn(ytdlpPath, args, {
         timeout: 3600000, // 1 hour timeout for large downloads
       });
 
