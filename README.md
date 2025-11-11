@@ -1,6 +1,9 @@
 # Scraper
 
-A secure, production-ready Electron desktop application for scraping and downloading YouTube videos using yt-dlp.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Electron](https://img.shields.io/badge/Electron-27+-blue.svg)](https://www.electronjs.org/)
+
+A secure, production-ready Electron desktop application for downloading YouTube videos using yt-dlp. Built with security best practices and a modern, intuitive interface.
 
 ## Features
 
@@ -27,83 +30,40 @@ This application implements comprehensive security measures:
 
 See [SECURITY.md](SECURITY.md) for detailed security information.
 
-## Prerequisites
+## Quick Start
 
-### Required
+### Prerequisites
+- **Node.js** v16+ ([Download](https://nodejs.org/))
+- **yt-dlp** ([Installation Guide](INSTALL.md#2-yt-dlp-required))
 
-1. **Node.js** (v16 or higher)
-   - Download from: https://nodejs.org/
+### Installation
 
-2. **yt-dlp** - Install using one of these methods:
+**Option 1: Download Pre-built App** (Recommended)
+- Download from [Releases](https://github.com/yourusername/scraper/releases)
+- See [INSTALL.md](INSTALL.md) for detailed instructions
 
-   **macOS (using Homebrew):**
-   ```bash
-   brew install yt-dlp
-   ```
-
-   **macOS/Linux (using pip):**
-   ```bash
-   pip install yt-dlp
-   ```
-
-   **Windows (using pip):**
-   ```bash
-   pip install yt-dlp
-   ```
-
-   **Or download binary from:** https://github.com/yt-dlp/yt-dlp/releases
-
-### Verify Installation
-
+**Option 2: Run from Source**
 ```bash
-yt-dlp --version
-```
-
-## Installation
-
-1. Clone or download this repository
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-## Running the App
-
-### Development Mode
-```bash
+git clone https://github.com/yourusername/scraper.git
+cd scraper
+npm install
 npm start
 ```
 
-### Development with DevTools
-```bash
-npm run dev
-```
+For detailed installation instructions, see [INSTALL.md](INSTALL.md).
 
-## Building for Production
+## Usage
 
-Build standalone executables:
+1. **Launch** the application
+2. **Paste** a YouTube video URL
+3. **Click** "Get Video Info" to fetch video details
+4. **Select** your preferred format from the list
+5. **Choose** download location by clicking "Browse"
+6. **Click** "Download" to start downloading
 
-```bash
-# macOS
-npm run build:mac
-
-# Windows
-npm run build:win
-
-# Linux
-npm run build:linux
-```
-
-Built applications will be in the `dist/` folder.
-
-## How to Use
-
-1. **Paste URL** - Enter a YouTube video URL in the input field
-2. **Fetch Info** - Click "Get Video Info" to load video details
-3. **Select Format** - Choose your preferred quality/format from the list
-4. **Choose Location** - Click "Browse" to select download folder
-5. **Download** - Click "Download" to start (or "Cancel" to stop)
+### Keyboard Shortcuts
+- `Enter` - Fetch video info (when URL input is focused)
+- Click logo - Return to home screen
 
 ## Project Structure
 
@@ -119,23 +79,52 @@ scraper/
 └── README.md         # This file
 ```
 
+## Documentation
+
+- 📦 [Installation Guide](INSTALL.md) - Detailed setup instructions
+- ❓ [FAQ](FAQ.md) - Frequently asked questions
+- 🔒 [Security Policy](SECURITY.md) - Security features and reporting
+- 🤝 [Contributing Guide](CONTRIBUTING.md) - How to contribute
+- 📋 [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
+- 📝 [Changelog](CHANGELOG.md) - Version history and updates
+
 ## Troubleshooting
 
-### yt-dlp not found
-- Ensure yt-dlp is installed: `yt-dlp --version`
-- Check it's in your PATH
-- Try reinstalling yt-dlp
+Common issues and solutions:
 
-### Download fails
-- Check your internet connection
-- Verify the YouTube URL is valid
-- Ensure you have write permissions to the download folder
-- Some videos may be restricted or unavailable
+| Issue             | Solution                                            |
+| ----------------- | --------------------------------------------------- |
+| yt-dlp not found  | Install yt-dlp and verify with `yt-dlp --version`   |
+| Download fails    | Check internet connection and URL validity          |
+| Permission errors | Select a writable folder (Desktop, Documents, etc.) |
+| App won't start   | Verify Node.js is installed: `node --version`       |
 
-### Permission errors
-- Make sure the selected download folder is writable
-- On macOS/Linux, check folder permissions
-- Try selecting a different download location
+For more help, see [INSTALL.md](INSTALL.md#troubleshooting) or [open an issue](https://github.com/yourusername/scraper/issues).
+
+## Building from Source
+
+### Build for Current Platform
+```bash
+npm run build
+```
+
+### Build for Specific Platforms
+```bash
+npm run build:mac      # macOS (DMG + ZIP)
+npm run build:win      # Windows (NSIS + Portable)
+npm run build:linux    # Linux (AppImage + DEB + RPM)
+npm run build:all      # All platforms
+```
+
+Or use the build script:
+```bash
+./build.sh mac         # macOS
+./build.sh win         # Windows
+./build.sh linux       # Linux
+./build.sh all         # All platforms
+```
+
+Built packages will be in the `dist/` folder. See [BUILD.md](BUILD.md) for detailed build instructions, code signing, and distribution.
 
 ## Development
 
@@ -155,6 +144,39 @@ scraper/
 
 MIT License - See LICENSE file for details
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### Development Guidelines
+- Follow existing code style
+- Add comments for complex logic
+- Test security-sensitive changes thoroughly
+- Update documentation as needed
+
+## Changelog
+
+### Version 1.0.0
+- Initial release
+- Secure video information fetching
+- Multiple format selection
+- Real-time download progress
+- Cross-platform support (macOS, Windows, Linux)
+
 ## Disclaimer
 
-This tool is for personal use only. Respect copyright laws and YouTube's Terms of Service. Only download videos you have permission to download.
+This tool is for personal use only. Respect copyright laws and YouTube's Terms of Service. Only download videos you have permission to download. The developers are not responsible for any misuse of this software.
+
+## Support
+
+- ❓ [FAQ](FAQ.md) - Common questions and answers
+- 📖 [Documentation](https://github.com/yourusername/scraper#documentation)
+- 🐛 [Report Issues](https://github.com/yourusername/scraper/issues)
+- 💬 [Discussions](https://github.com/yourusername/scraper/discussions)
+- 📧 Email: support@example.com
+
+## Acknowledgments
+
+- Built with [Electron](https://www.electronjs.org/)
+- Powered by [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- Inspired by the open-source community

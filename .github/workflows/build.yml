@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        node-version: [16.x, 18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for syntax errors
+        run: node -c main.js && node -c preload.js && node -c renderer.js
+
+      - name: Build application
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            npm run build:mac
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            npm run build:win
+          else
+            npm run build:linux
+          fi
+        shell: bash

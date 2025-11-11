@@ -6,9 +6,14 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
-    "build:linux": "electron-builder --linux"
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder -mwl",
+    "clean": "rm -rf dist build node_modules",
+    "reinstall": "npm run clean && npm install",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "electron",
@@ -18,17 +23,27 @@
     "scraper",
     "video"
   ],
-  "author": "",
+  "author": "Scraper Contributors",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/scraper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/scraper/issues"
+  },
+  "homepage": "https://github.com/yourusername/scraper#readme",
   "devDependencies": {
     "electron": "^39.1.2",
     "electron-builder": "^24.6.4"
   },
   "build": {
-    "appId": "com.yourdomain.scraper",
+    "appId": "com.scraper.app",
     "productName": "Scraper",
+    "copyright": "Copyright © 2025 Scraper Contributors",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "Logo"
     },
     "files": [
       "main.js",
@@ -36,27 +51,95 @@
       "renderer.js",
       "index.html",
       "styles.css",
-      "package.json"
+      "package.json",
+      "!**/*.md",
+      "!.github",
+      "!.vscode",
+      "!dist",
+      "!node_modules"
+    ],
+    "extraResources": [
+      {
+        "from": "Logo",
+        "to": "Logo",
+        "filter": ["**/*"]
+      }
     ],
     "mac": {
+      "icon": "Logo/icon.icns",
       "category": "public.app-category.utilities",
       "target": [
-        "dmg",
-        "zip"
-      ]
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
     "win": {
+      "icon": "Logo/Scraper Logo.PNG",
       "target": [
-        "nsis",
-        "portable"
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
       ]
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Scraper"
+    },
     "linux": {
+      "icon": "Logo/Scraper Logo.PNG",
       "target": [
-        "AppImage",
-        "deb"
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        }
       ],
-      "category": "Utility"
+      "category": "Utility",
+      "maintainer": "Scraper Contributors",
+      "vendor": "Scraper",
+      "synopsis": "YouTube Video Downloader",
+      "description": "A secure Electron application for downloading YouTube videos using yt-dlp"
     }
   }
 }

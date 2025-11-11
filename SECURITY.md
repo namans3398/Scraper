@@ -34,7 +34,9 @@ This application implements the following security measures:
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please email [your-email@example.com].
+If you discover a security vulnerability, please report it via:
+- GitHub Issues: https://github.com/yourusername/scraper/issues (for non-critical issues)
+- Email: security@example.com (for critical vulnerabilities)
 
 Please include:
 - Description of the vulnerability
@@ -43,3 +45,13 @@ Please include:
 - Suggested fix (if any)
 
 We will respond within 48 hours and work to address valid security concerns promptly.
+
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.0.x   | :white_check_mark: |
+
+## Security Updates
+
+Security updates will be released as patch versions. Always use the latest version for the best security.
