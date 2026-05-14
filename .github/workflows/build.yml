@@ -67,6 +67,8 @@ jobs:
         run: npm ci
 
       - name: Package application
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           case "$RUNNER_OS" in
             macOS) npm run build:mac ;;

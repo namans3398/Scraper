@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Scraper is an open-source, production-ready desktop application for downloading videos using `yt-dlp`. It is built with Electron and runs on macOS, Windows, and Linux.
+Scraper is an open-source, production-ready desktop application for downloading videos using `yt-dlp`. It is built with Electron and is currently available for macOS only.
 
 ## Features
 
