@@ -153,8 +153,8 @@ async function fetchVideoInfo(url, fromHeader = false) {
     showError(
       getErrorMessage(
         err,
-        "Failed to fetch video information. Make sure yt-dlp is installed."
-      )
+        "Failed to fetch video information. Make sure yt-dlp is installed.",
+      ),
     );
   } finally {
     fetchBtn.disabled = false;
@@ -320,13 +320,13 @@ function displayFormats(formats) {
 
   // Filter and sort formats
   const combinedVideoFormats = formats.filter(
-    (f) => f.vcodec !== "none" && f.acodec !== "none"
+    (f) => f.vcodec !== "none" && f.acodec !== "none",
   );
   const videoOnlyFormats = formats.filter(
-    (f) => f.vcodec !== "none" && f.acodec === "none"
+    (f) => f.vcodec !== "none" && f.acodec === "none",
   );
   const audioFormats = formats.filter(
-    (f) => f.vcodec === "none" && f.acodec !== "none"
+    (f) => f.vcodec === "none" && f.acodec !== "none",
   );
 
   if (combinedVideoFormats.length > 0) {
@@ -390,8 +390,8 @@ function addFormatSection(title, formats) {
     size.textContent = format.filesize
       ? formatBytes(format.filesize)
       : format.filesize_approx
-      ? `~${formatBytes(format.filesize_approx)}`
-      : "Size unknown";
+        ? `~${formatBytes(format.filesize_approx)}`
+        : "Size unknown";
 
     item.appendChild(info);
     item.appendChild(size);
@@ -472,7 +472,12 @@ function updateDownloadButton() {
 
 // Download video
 downloadBtn.addEventListener("click", async () => {
-  if (!currentVideoUrl || !selectedFormat || !selectedOutputPath || isDownloading) {
+  if (
+    !currentVideoUrl ||
+    !selectedFormat ||
+    !selectedOutputPath ||
+    isDownloading
+  ) {
     return;
   }
 
@@ -502,7 +507,7 @@ downloadBtn.addEventListener("click", async () => {
     if (isDownloading) {
       progressOutput.textContent += `\nError: ${getErrorMessage(
         err,
-        "Unknown error"
+        "Unknown error",
       )}`;
     }
   } finally {
@@ -536,7 +541,7 @@ cancelBtn.addEventListener("click", async () => {
   } catch (err) {
     progressOutput.textContent += `\nError cancelling: ${getErrorMessage(
       err,
-      "Unknown error"
+      "Unknown error",
     )}`;
   }
 });
@@ -569,7 +574,10 @@ function formatBytes(bytes) {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(k)),
+    sizes.length - 1,
+  );
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
