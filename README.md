@@ -1,27 +1,58 @@
-# Scraper
+<div align="center">
+  <h1>
+    <img src="Logo/icon.png" alt="Scraper app icon" width="56" height="56" align="center">
+    Scraper
+  </h1>
+  <p><strong>A secure, open-source desktop video downloader powered by <code>yt-dlp</code>.</strong></p>
+  <p>
+    <a href="https://github.com/namans3398/Scraper/actions/workflows/build.yml">
+      <img src="https://github.com/namans3398/Scraper/actions/workflows/build.yml/badge.svg" alt="Build status">
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+    </a>
+    <img src="https://img.shields.io/badge/Platform-macOS%20first-blue" alt="macOS first">
+    <img src="https://img.shields.io/badge/Electron-39.8.10-47848F" alt="Electron 39.8.10">
+  </p>
+  <p>
+    <a href="#features">Features</a> ·
+    <a href="#quick-start">Quick Start</a> ·
+    <a href="#documentation">Documentation</a> ·
+    <a href="#contributing">Contributing</a> ·
+    <a href="#license">License</a>
+  </p>
+</div>
 
-[![Build](https://github.com/namans3398/Scraper/actions/workflows/build.yml/badge.svg)](https://github.com/namans3398/Scraper/actions/workflows/build.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## Overview
 
-Scraper is a secure, open-source desktop application for downloading videos through `yt-dlp`. It provides a focused Electron interface for fetching video metadata, choosing available formats, selecting an output folder, downloading thumbnails, and tracking download progress.
+Scraper is a focused Electron application for downloading videos through `yt-dlp`. It helps you fetch video metadata, inspect available formats, choose an output folder, download thumbnails, and track download progress from a clean desktop interface.
 
-The first production-ready release is **macOS-first**. Windows and Linux package targets exist in the build configuration for contributor testing, but they are not considered supported release platforms until they have dedicated validation and signing coverage.
+The first production-ready release is **macOS-first**. Windows and Linux package targets exist for contributor testing, but they are not considered supported release platforms until they have dedicated validation, signing, and release coverage.
 
 ## Features
 
-- Fetch video metadata with `yt-dlp`.
+- Fetch video metadata through `yt-dlp`.
 - Display title, channel, duration, upload metadata, thumbnail, tags, and available formats.
-- Download selected video/audio formats to a user-selected folder.
+- Download selected video and audio formats to a user-selected folder.
 - Download thumbnails separately.
 - Detect and update local `yt-dlp` and `ffmpeg` dependencies.
-- Use Electron security controls: context isolation, sandboxing, disabled Node.js integration in the renderer, validated IPC, and a local Content Security Policy.
+- Run with Electron security controls, including context isolation, sandboxing, disabled renderer Node.js integration, validated IPC, and a local Content Security Policy.
+- Keep user privacy simple: no analytics, telemetry, or trackers.
 
 ## Requirements
 
-- macOS for the supported first release.
-- Node.js 20 or newer for source builds.
-- `yt-dlp` for metadata and video downloads.
-- `ffmpeg` when selected formats require audio/video merging.
+| Requirement | Notes |
+| --- | --- |
+| macOS 13+ | Supported target for the first public release. |
+| Node.js 20+ | Required for source builds and development. |
+| `yt-dlp` | Required for metadata fetching and downloads. |
+| `ffmpeg` | Required when a selected format needs audio/video merging. |
+
+Install runtime tools on macOS with Homebrew:
+
+```bash
+brew install yt-dlp ffmpeg
+```
 
 ## Quick Start
 
@@ -38,20 +69,84 @@ Run the full local quality gate before opening a pull request:
 npm run check
 ```
 
+`npm run check` runs ESLint, TypeScript checking, and the Node test suite.
+
+## Development
+
+```bash
+npm run dev          # Start Electron in development mode
+npm run lint         # Run ESLint
+npm run type-check   # Run TypeScript checks
+npm test             # Run the Node test suite
+npm run build:mac    # Build the supported macOS package
+```
+
+Artifacts are written to `dist/`. Windows and Linux build scripts are available for contributor testing only:
+
+```bash
+npm run build:win
+npm run build:linux
+npm run build:all
+```
+
+## Security Model
+
+Scraper handles URLs, local file paths, external downloads, and command execution. Security-sensitive changes should preserve these project rules:
+
+- Validate IPC input at preload and main process boundaries.
+- Launch external tools with argument arrays instead of shell strings.
+- Keep renderer Node.js integration disabled.
+- Avoid remote renderer content unless there is a reviewed security reason.
+- Preserve output-path, URL, redirect, size, and timeout checks.
+
+Please report vulnerabilities through the [Security Policy](docs/SECURITY.md).
+
 ## Documentation
 
 - [Installation Guide](docs/INSTALL.md)
 - [Building from Source](docs/BUILD.md)
 - [Security Policy](docs/SECURITY.md)
 - [Project Structure](docs/PROJECT_STRUCTURE.md)
-- [Contributing](docs/CONTRIBUTING.md)
+- [Contributing Guide](docs/CONTRIBUTING.md)
 - [Code of Conduct](docs/CODE_OF_CONDUCT.md)
 - [FAQ](docs/FAQ.md)
 - [Production Checklist](docs/PRODUCTION_CHECKLIST.md)
 
 ## Release Status
 
-Public binaries for the first release should be published as an unsigned draft GitHub release until code signing and notarization are configured. macOS users may need to approve the app manually in System Settings when testing unsigned builds.
+Public binaries for the first release should be published as unsigned draft GitHub release artifacts until code signing and notarization are configured. macOS users may need to approve the app manually in System Settings when testing unsigned builds.
+
+## Contributing
+
+Contributions are welcome. Before opening a pull request:
+
+1. Search existing issues and pull requests.
+2. Keep changes scoped to one bug, feature, or documentation update.
+3. Add or update tests for behavior changes.
+4. Update documentation when commands, supported platforms, security posture, or release behavior changes.
+5. Run `npm run check` locally.
+
+Read the full [Contributing Guide](docs/CONTRIBUTING.md) and [Code of Conduct](docs/CODE_OF_CONDUCT.md) before participating.
+
+## Contributors
+
+Thanks to everyone who helps build, test, document, and maintain Scraper.
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/namans3398">
+        <img src="https://github.com/namans3398.png?size=96" width="96" height="96" alt="Naman Singh Rao">
+        <br>
+        <sub><strong>Naman Singh Rao</strong></sub>
+      </a>
+      <br>
+      <sub>Maintainer</sub>
+    </td>
+  </tr>
+</table>
+
+See the full contributor history on the [GitHub contributors page](https://github.com/namans3398/Scraper/graphs/contributors).
 
 ## License
 
