@@ -271,8 +271,8 @@ function displayVideoInfo(data) {
   }
 
   // Handle tags
-  if (data.tags && data.tags.length > 0) {
-    tags.innerHTML = "";
+  if (Array.isArray(data.tags) && data.tags.length > 0) {
+    tags.replaceChildren();
     data.tags.forEach((tag) => {
       const tagElement = document.createElement("span");
       tagElement.className = "tag";
@@ -315,7 +315,7 @@ document
  * @param {any[]} formats
  */
 function displayFormats(formats) {
-  formatsList.innerHTML = "";
+  formatsList.replaceChildren();
   resetSelectedFormat();
 
   // Filter and sort formats

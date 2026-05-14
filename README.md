@@ -28,19 +28,19 @@ This application implements comprehensive security measures:
 - ✅ No remote code execution
 - ✅ External navigation blocking
 
-See [SECURITY.md](SECURITY.md) for detailed security information.
+See [SECURITY.md](docs/SECURITY.md) for detailed security information.
 
 ## Quick Start
 
 ### Prerequisites
 - **Node.js** v20+ ([Download](https://nodejs.org/))
-- **yt-dlp** ([Installation Guide](INSTALL.md#2-yt-dlp-required))
+- **yt-dlp** ([Installation Guide](docs/INSTALL.md#2-yt-dlp-required))
 
 ### Installation
 
 **Option 1: Download Pre-built App** (Recommended)
 - Download from [Releases](https://github.com/namans3398/Scraper/releases)
-- See [INSTALL.md](INSTALL.md) for detailed instructions
+- See [INSTALL.md](docs/INSTALL.md) for detailed instructions
 
 **Option 2: Run from Source**
 ```bash
@@ -50,7 +50,7 @@ npm install
 npm start
 ```
 
-For detailed installation instructions, see [INSTALL.md](INSTALL.md).
+For detailed installation instructions, see [INSTALL.md](docs/INSTALL.md).
 
 ## Usage
 
@@ -75,17 +75,17 @@ scraper/
 ├── index.html        # Application interface with CSP
 ├── styles.css        # Modern, responsive styling
 ├── package.json      # Dependencies and build config
-├── SECURITY.md       # Security documentation
+├── docs/SECURITY.md       # Security documentation
 └── README.md         # This file
 ```
 
 ## Documentation
 
 - 📦 [Installation Guide](INSTALL.md) - Detailed setup instructions
-- ❓ [FAQ](FAQ.md) - Frequently asked questions
+- ❓ [FAQ](docs/FAQ.md) - Frequently asked questions
 - 🔒 [Security Policy](SECURITY.md) - Security features and reporting
-- 🤝 [Contributing Guide](CONTRIBUTING.md) - How to contribute
-- 📋 [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
+- 🤝 [Contributing Guide](docs/CONTRIBUTING.md) - How to contribute
+- 📋 [Code of Conduct](docs/CODE_OF_CONDUCT.md) - Community guidelines
 - 📝 [Changelog](CHANGELOG.md) - Version history and updates
 
 ## Troubleshooting
@@ -99,7 +99,7 @@ Common issues and solutions:
 | Permission errors | Select a writable folder (Desktop, Documents, etc.) |
 | App won't start   | Verify Node.js is installed: `node --version`       |
 
-For more help, see [INSTALL.md](INSTALL.md#troubleshooting) or [open an issue](https://github.com/namans3398/Scraper/issues).
+For more help, see [INSTALL.md](docs/INSTALL.md#troubleshooting) or [open an issue](https://github.com/namans3398/Scraper/issues).
 
 ## Building from Source
 
@@ -124,7 +124,7 @@ Or use the build script:
 ./build.sh all         # All platforms
 ```
 
-Built packages will be in the `dist/` folder. See [BUILD.md](BUILD.md) for detailed build instructions, code signing, and distribution.
+Built packages will be in the `dist/` folder. See [BUILD.md](docs/BUILD.md) for detailed build instructions, code signing, and distribution.
 
 ## Development
 
@@ -169,11 +169,11 @@ This tool is for personal use only. Respect copyright laws and YouTube's Terms o
 
 ## Support
 
-- ❓ [FAQ](FAQ.md) - Common questions and answers
+- ❓ [FAQ](docs/FAQ.md) - Common questions and answers
 - 📖 [Documentation](https://github.com/namans3398/Scraper#documentation)
 - 🐛 [Report Issues](https://github.com/namans3398/Scraper/issues)
 - 💬 [Discussions](https://github.com/namans3398/Scraper/discussions)
-- Security reports: see [SECURITY.md](SECURITY.md)
+- Security reports: see [SECURITY.md](docs/SECURITY.md)
 
 ## Acknowledgments
 
