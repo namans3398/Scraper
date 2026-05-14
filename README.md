@@ -16,10 +16,14 @@
   </p>
   <p>
     <a href="#features">Features</a> ·
+    <a href="#screenshots">Screenshots</a> ·
     <a href="#quick-start">Quick Start</a> ·
     <a href="#documentation">Documentation</a> ·
     <a href="#contributing">Contributing</a> ·
     <a href="#license">License</a>
+  </p>
+  <p>
+    <img src="docs/assets/social/social-preview.png" alt="Scraper social preview showing supported video, audio, metadata, caption, thumbnail, and JSON workflows" width="720">
   </p>
 </div>
 
@@ -28,6 +32,20 @@
 Scraper is a focused Electron application for downloading videos through `yt-dlp`. It helps you fetch video metadata, inspect available formats, choose an output folder, download thumbnails, and track download progress from a clean desktop interface.
 
 The first production-ready release is **macOS-first**. Windows and Linux package targets exist for contributor testing, but they are not considered supported release platforms until they have dedicated validation, signing, and release coverage.
+
+## Screenshots
+
+<p>
+  <img src="docs/assets/screenshots/welcome-screen.png" alt="Scraper welcome screen with a YouTube URL field and Get Video Info button" width="100%">
+</p>
+
+<p>
+  <img src="docs/assets/screenshots/video-formats.png" alt="Scraper video details view with thumbnail, metadata, tags, available formats, output folder picker, and download button" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/expanded-description.png" alt="Scraper expanded video description panel with video metadata and tags" width="620">
+</p>
 
 ## Features
 
