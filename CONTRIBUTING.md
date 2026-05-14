@@ -41,7 +41,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 1. Clone your fork:
    ```bash
-   git clone https://github.com/yourusername/scraper.git
+   git clone https://github.com/namans3398/Scraper.git
    cd scraper
    ```
 

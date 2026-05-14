@@ -4,7 +4,7 @@ This guide explains how to build Scraper for different platforms.
 
 ## Prerequisites
 
-- Node.js 16+ and npm installed
+- Node.js 20+ and npm installed
 - For macOS builds: macOS with Xcode Command Line Tools
 - For Windows builds: Windows or macOS/Linux with Wine
 - For Linux builds: Any platform

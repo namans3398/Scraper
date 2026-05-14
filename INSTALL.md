@@ -14,7 +14,7 @@ Complete installation instructions for Scraper on all supported platforms.
 
 ### 1. Node.js (Required)
 
-Download and install Node.js v16 orhigher from [nodejs.org](https://nodejs.org/)
+Download and install Node.js v20 or higher from [nodejs.org](https://nodejs.org/)
 
 Verify installation:
 ```bash
@@ -102,7 +102,7 @@ You should see a version number (e.g., `2024.10.22`).
 
 ### Option 1: Download Pre-built Binary (Recommended)
 
-1. Go to [Releases](https://github.com/yourusername/scraper/releases)
+1. Go to [Releases](https://github.com/namans3398/Scraper/releases)
 2. Download the appropriate file for your platform:
    - **macOS**: `Scraper-1.0.0.dmg` or `Scraper-1.0.0-mac.zip`
    - **Windows**: `Scraper-Setup-1.0.0.exe` or `Scraper-1.0.0-win.exe`
@@ -113,7 +113,7 @@ You should see a version number (e.g., `2024.10.22`).
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/scraper.git
+   git clone https://github.com/namans3398/Scraper.git
    cd scraper
    ```
 
@@ -212,7 +212,7 @@ Output: `dist/Scraper-1.0.0.AppImage` and `dist/scraper_1.0.0_amd64.deb`
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/scraper.git
+git clone https://github.com/namans3398/Scraper.git
 cd scraper
 
 # Install dependencies
@@ -303,9 +303,9 @@ npm run build:mac && npm run build:win && npm run build:linux
 
 If you encounter issues not covered here:
 
-1. Check [existing issues](https://github.com/yourusername/scraper/issues)
-2. Search [discussions](https://github.com/yourusername/scraper/discussions)
-3. Create a [new issue](https://github.com/yourusername/scraper/issues/new) with:
+1. Check [existing issues](https://github.com/namans3398/Scraper/issues)
+2. Search [discussions](https://github.com/namans3398/Scraper/discussions)
+3. Create a [new issue](https://github.com/namans3398/Scraper/issues/new) with:
    - Your OS and version
    - Node.js version (`node --version`)
    - yt-dlp version (`yt-dlp --version`)

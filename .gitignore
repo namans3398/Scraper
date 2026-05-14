@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 out/
+*.blockmap
+builder-debug.yml
+builder-effective-config.yaml
 
 # Logs
 *.log
@@ -41,7 +44,6 @@ Desktop.ini
 .cache/
 
 # Package manager
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 

@@ -3,6 +3,11 @@
 interface ElectronAPI {
   getVideoInfo: (url: string) => Promise<any>;
   selectFolder: () => Promise<string | null>;
+  downloadThumbnail: (data: {
+    url: string;
+    title: string;
+    outputPath?: string | null;
+  }) => Promise<{ success: boolean; canceled?: boolean; path?: string }>;
   downloadVideo: (data: {
     url: string;
     formatId: string;

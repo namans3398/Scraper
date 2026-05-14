@@ -6,9 +6,11 @@
  */
 
 // Application state
-/** @type {any} */
-// eslint-disable-next-line no-unused-vars
-let _currentVideoData = null;
+/** @type {string | null} */
+let currentVideoUrl = null;
+/** @type {string | null} */
+let currentThumbnailUrl = null;
+let currentVideoTitle = "thumbnail";
 /** @type {string | null} */
 let selectedFormat = null;
 /** @type {string | null} */
@@ -69,6 +71,10 @@ const downloadProgress = /** @type {HTMLElement} */ (
 const progressOutput = /** @type {HTMLElement} */ (
   document.getElementById("progressOutput")
 );
+/** @type {HTMLButtonElement} */
+const downloadThumbnailBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("downloadThumbnailBtn")
+);
 
 // Security: Input sanitization
 /**
@@ -78,17 +84,6 @@ const progressOutput = /** @type {HTMLElement} */ (
 function sanitizeInput(input) {
   if (typeof input !== "string") return "";
   return input.trim().substring(0, 2000);
-}
-
-// Security: Escape HTML to prevent XSS
-/**
- * @param {any} text
- * @returns {string}
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
 }
 
 // Fetch video info function
@@ -122,13 +117,17 @@ async function fetchVideoInfo(url, fromHeader = false) {
 
   hideError();
   hideVideoInfo();
+  currentVideoUrl = null;
+  currentThumbnailUrl = null;
+  currentVideoTitle = "thumbnail";
+  resetSelectedFormat();
   showLoading();
   fetchBtn.disabled = true;
   headerFetchBtn.disabled = true;
 
   try {
     const data = await window.electronAPI.getVideoInfo(sanitizedUrl);
-    _currentVideoData = data;
+    currentVideoUrl = sanitizedUrl;
     displayVideoInfo(data);
     hideLoading();
   } catch (err) {
@@ -206,14 +205,19 @@ function displayVideoInfo(data) {
   const tags = /** @type {HTMLElement} */ (document.getElementById("tags"));
 
   // Validate thumbnail URL
+  currentThumbnailUrl = null;
   try {
     const thumbUrl = new URL(data.thumbnail);
     if (thumbUrl.protocol === "https:" || thumbUrl.protocol === "http:") {
       thumbnail.src = data.thumbnail;
+      currentThumbnailUrl = data.thumbnail;
     }
   } catch {
     thumbnail.src = "";
   }
+
+  currentVideoTitle = data.title || "thumbnail";
+  downloadThumbnailBtn.disabled = !currentThumbnailUrl;
 
   title.textContent = data.title || "Unknown Title";
   channel.textContent = data.uploader || "Unknown Channel";
@@ -292,6 +296,7 @@ document
  */
 function displayFormats(formats) {
   formatsList.innerHTML = "";
+  resetSelectedFormat();
 
   // Filter and sort formats
   const videoFormats = formats.filter(
@@ -307,6 +312,13 @@ function displayFormats(formats) {
 
   if (audioFormats.length > 0) {
     addFormatSection("Audio Only", audioFormats);
+  }
+
+  if (videoFormats.length === 0 && audioFormats.length === 0) {
+    const emptyState = document.createElement("div");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "No downloadable formats were found.";
+    formatsList.appendChild(emptyState);
   }
 }
 
@@ -337,7 +349,7 @@ function addFormatSection(title, formats) {
     const resolution = format.resolution || "audio";
     const ext = format.ext || "unknown";
     const fps = format.fps ? ` ${format.fps}fps` : "";
-    details.textContent = `${resolution} • ${ext}${fps}`;
+    details.textContent = `${resolution} - ${ext}${fps}`;
 
     info.appendChild(type);
     info.appendChild(details);
@@ -374,13 +386,54 @@ function selectFormat(element, format) {
   updateDownloadButton();
 }
 
+function resetSelectedFormat() {
+  selectedFormat = null;
+  document.querySelectorAll(".format-item").forEach((item) => {
+    item.classList.remove("selected");
+  });
+  updateDownloadButton();
+}
+
+downloadThumbnailBtn.addEventListener("click", async () => {
+  if (!currentThumbnailUrl || downloadThumbnailBtn.disabled) return;
+
+  downloadThumbnailBtn.disabled = true;
+  hideError();
+
+  try {
+    const result = await window.electronAPI.downloadThumbnail({
+      url: currentThumbnailUrl,
+      title: currentVideoTitle,
+      outputPath: selectedOutputPath,
+    });
+
+    if (result && result.canceled) {
+      return;
+    }
+  } catch (err) {
+    showError(
+      (err && typeof err === "object" && "error" in err ? err.error : null) ||
+        "Failed to download thumbnail."
+    );
+  } finally {
+    downloadThumbnailBtn.disabled = !currentThumbnailUrl;
+  }
+});
+
 // Select output folder
 selectFolderBtn.addEventListener("click", async () => {
-  const folder = await window.electronAPI.selectFolder();
-  if (folder) {
-    selectedOutputPath = folder;
-    outputPath.value = folder;
-    updateDownloadButton();
+  try {
+    const folder = await window.electronAPI.selectFolder();
+    if (folder) {
+      selectedOutputPath = folder;
+      outputPath.value = folder;
+      updateDownloadButton();
+    }
+  } catch (err) {
+    showError(
+      (err && typeof err === "object" && "error" in err ? err.error : null) ||
+        "Unable to select that folder."
+    );
   }
 });
 
@@ -391,7 +444,9 @@ function updateDownloadButton() {
 
 // Download video
 downloadBtn.addEventListener("click", async () => {
-  if (!selectedFormat || !selectedOutputPath || isDownloading) return;
+  if (!currentVideoUrl || !selectedFormat || !selectedOutputPath || isDownloading) {
+    return;
+  }
 
   isDownloading = true;
   downloadBtn.disabled = true;
@@ -401,25 +456,27 @@ downloadBtn.addEventListener("click", async () => {
 
   // Setup progress listener
   progressCleanup = window.electronAPI.onDownloadProgress((data) => {
-    // Security: Sanitize progress output
-    const sanitized = escapeHtml(data);
-    progressOutput.textContent += sanitized;
+    progressOutput.textContent += data;
     progressOutput.scrollTop = progressOutput.scrollHeight;
   });
 
   try {
     await window.electronAPI.downloadVideo({
-      url: sanitizeInput(urlInput.value),
+      url: currentVideoUrl,
       formatId: selectedFormat,
       outputPath: selectedOutputPath,
     });
 
-    progressOutput.textContent += "\n✓ Download completed successfully!";
+    if (isDownloading) {
+      progressOutput.textContent += "\nDownload completed successfully.";
+    }
   } catch (err) {
-    progressOutput.textContent += `\n✗ Error: ${escapeHtml(
+    if (isDownloading) {
+      progressOutput.textContent += `\nError: ${
       (err && typeof err === "object" && "error" in err ? err.error : null) ||
         "Unknown error"
-    )}`;
+      }`;
+    }
   } finally {
     isDownloading = false;
     downloadBtn.disabled = false;
@@ -439,7 +496,7 @@ cancelBtn.addEventListener("click", async () => {
 
   try {
     await window.electronAPI.cancelDownload();
-    progressOutput.textContent += "\n⚠ Download cancelled by user";
+    progressOutput.textContent += "\nDownload cancelled by user.";
     isDownloading = false;
     downloadBtn.disabled = false;
     cancelBtn.classList.add("hidden");
@@ -449,10 +506,10 @@ cancelBtn.addEventListener("click", async () => {
       progressCleanup = null;
     }
   } catch (err) {
-    progressOutput.textContent += `\n✗ Error cancelling: ${escapeHtml(
+    progressOutput.textContent += `\nError cancelling: ${
       (err && typeof err === "object" && "error" in err ? err.error : null) ||
         "Unknown error"
-    )}`;
+    }`;
   }
 });
 
@@ -480,10 +537,11 @@ function formatDuration(seconds) {
  * @returns {string}
  */
 function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return "Size unknown";
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
@@ -578,6 +636,11 @@ function goBackToHome() {
   document.getElementById("mainApp").classList.add("hidden");
   urlInput.value = "";
   headerUrlInput.value = "";
+  currentVideoUrl = null;
+  currentThumbnailUrl = null;
+  currentVideoTitle = "thumbnail";
+  downloadThumbnailBtn.disabled = true;
+  resetSelectedFormat();
   hideVideoInfo();
   hideError();
   hideLoading();

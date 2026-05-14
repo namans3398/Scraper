@@ -25,6 +25,25 @@ contextBridge.exposeInMainWorld("electronAPI", {
   /**
    * @param {object} data
    */
+  downloadThumbnail: (data) => {
+    if (!data || typeof data !== "object") {
+      return Promise.reject({ error: "Invalid thumbnail data" });
+    }
+    if (
+      typeof data.url !== "string" ||
+      typeof data.title !== "string" ||
+      (data.outputPath !== null &&
+        data.outputPath !== undefined &&
+        typeof data.outputPath !== "string")
+    ) {
+      return Promise.reject({ error: "Invalid thumbnail parameters" });
+    }
+    return ipcRenderer.invoke("download-thumbnail", data);
+  },
+
+  /**
+   * @param {object} data
+   */
   downloadVideo: (data) => {
     // Validate input structure
     if (!data || typeof data !== "object") {

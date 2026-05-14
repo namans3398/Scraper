@@ -260,7 +260,7 @@ None - Uses only Electron built-in modules
 - Timeouts on all external processes
 
 ### XSS Prevention
-- HTML escaping for all displayed content
+- Safe DOM text rendering for displayed content
 - Content Security Policy enforced
 - No inline scripts or eval()
 

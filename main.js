@@ -7,9 +7,11 @@
  */
 
 const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
-const { exec, spawn } = require("child_process");
+const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
+const https = require("https");
 const { URL } = require("url");
 
 /** @type {Electron.BrowserWindow | null} */
@@ -34,6 +36,19 @@ function getYtDlpPath() {
 
   // Fall back to PATH lookup
   return "yt-dlp";
+}
+
+/**
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isSafeExternalUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 // Security: Disable hardware acceleration if needed for compatibility
@@ -68,16 +83,21 @@ function createWindow() {
 
   // Security: Prevent navigation to external sites
   mainWindow.webContents.on("will-navigate", (event, navigationUrl) => {
-    const parsedUrl = new URL(navigationUrl);
-    if (parsedUrl.origin !== "file://") {
+    try {
+      const parsedUrl = new URL(navigationUrl);
+      if (parsedUrl.protocol !== "file:") {
+        event.preventDefault();
+      }
+    } catch {
       event.preventDefault();
     }
   });
 
   // Security: Prevent opening new windows
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // Open external links in default browser instead
-    shell.openExternal(url);
+    if (isSafeExternalUrl(url)) {
+      shell.openExternal(url);
+    }
     return { action: "deny" };
   });
 
@@ -119,38 +139,194 @@ app.on("activate", () => {
 function isValidYouTubeUrl(urlString) {
   try {
     const url = new URL(urlString);
-    const validDomains = [
-      "youtube.com",
-      "www.youtube.com",
-      "m.youtube.com",
-      "youtu.be",
-      "www.youtu.be",
-    ];
-    return validDomains.some(
-      (domain) => url.hostname === domain || url.hostname.endsWith("." + domain)
+    const hostname = url.hostname.toLowerCase();
+
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      return false;
+    }
+
+    return (
+      hostname === "youtu.be" ||
+      hostname === "youtube.com" ||
+      hostname.endsWith(".youtube.com")
     );
   } catch {
     return false;
   }
 }
 
-// Utility: Sanitize file path
+// Utility: Validate and normalize output directories received over IPC.
 /**
  * @param {string} filePath
  * @returns {string}
  */
-function sanitizePath(filePath) {
-  // Remove any potentially dangerous characters
-  return path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, "");
+function normalizeOutputPath(filePath) {
+  if (filePath.includes("\0")) {
+    throw new Error("Output path contains invalid characters");
+  }
+
+  if (!path.isAbsolute(filePath)) {
+    throw new Error("Output path must be absolute");
+  }
+
+  return path.resolve(filePath);
+}
+
+/**
+ * @param {string} filename
+ * @returns {string}
+ */
+function sanitizeFilename(filename) {
+  return Array.from(filename)
+    .filter((character) => {
+      const code = character.charCodeAt(0);
+      return code > 31 && !'<>:"/\\|?*'.includes(character);
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
+/**
+ * @param {string} thumbnailUrl
+ * @returns {string}
+ */
+function getThumbnailExtension(thumbnailUrl) {
+  try {
+    const extension = path
+      .extname(new URL(thumbnailUrl).pathname)
+      .toLowerCase()
+      .replace(".", "");
+
+    if (["jpg", "jpeg", "png", "webp"].includes(extension)) {
+      return extension === "jpeg" ? "jpg" : extension;
+    }
+  } catch {
+    // Fall through to the default extension.
+  }
+
+  return "jpg";
+}
+
+/**
+ * @param {string} thumbnailUrl
+ * @returns {boolean}
+ */
+function isValidThumbnailUrl(thumbnailUrl) {
+  try {
+    const parsedUrl = new URL(thumbnailUrl);
+    return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {string} sourceUrl
+ * @param {string} destinationPath
+ * @param {number} redirectsRemaining
+ * @returns {Promise<void>}
+ */
+function downloadFile(sourceUrl, destinationPath, redirectsRemaining = 5) {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(sourceUrl);
+    const client = parsedUrl.protocol === "https:" ? https : http;
+    const tempPath = `${destinationPath}.${Date.now()}.download`;
+    const request = client.get(parsedUrl, (response) => {
+      const statusCode = response.statusCode || 0;
+
+      if (
+        statusCode >= 300 &&
+        statusCode < 400 &&
+        response.headers.location &&
+        redirectsRemaining > 0
+      ) {
+        response.resume();
+        const redirectUrl = new URL(response.headers.location, sourceUrl).href;
+        downloadFile(redirectUrl, destinationPath, redirectsRemaining - 1)
+          .then(resolve)
+          .catch(reject);
+        return;
+      }
+
+      if (statusCode !== 200) {
+        response.resume();
+        reject(new Error(`Thumbnail request failed with status ${statusCode}`));
+        return;
+      }
+
+      const contentLength = Number(response.headers["content-length"] || 0);
+      const maxBytes = 20 * 1024 * 1024;
+      if (contentLength > maxBytes) {
+        response.resume();
+        reject(new Error("Thumbnail file is too large"));
+        return;
+      }
+
+      let receivedBytes = 0;
+      const fileStream = fs.createWriteStream(tempPath, { flags: "wx" });
+
+      response.on("data", (chunk) => {
+        receivedBytes += chunk.length;
+        if (receivedBytes > maxBytes) {
+          request.destroy(new Error("Thumbnail file is too large"));
+        }
+      });
+
+      fileStream.on("finish", () => {
+        fileStream.close(async (error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          try {
+            await fs.promises.rename(tempPath, destinationPath);
+            resolve();
+          } catch (renameError) {
+            fs.promises.unlink(tempPath).catch(() => {});
+            reject(renameError);
+          }
+        });
+      });
+
+      fileStream.on("error", (error) => {
+        response.destroy();
+        fs.promises.unlink(tempPath).catch(() => {});
+        reject(error);
+      });
+
+      response.pipe(fileStream);
+    });
+
+    request.setTimeout(30000, () => {
+      request.destroy(new Error("Thumbnail download timed out"));
+    });
+
+    request.on("error", (error) => {
+      fs.promises.unlink(tempPath).catch(() => {});
+      reject(error);
+    });
+  });
 }
 
 // Utility: Check if yt-dlp is available
 function checkYtDlpAvailable() {
   return new Promise((resolve) => {
     const ytdlpPath = getYtDlpPath();
-    // eslint-disable-next-line security/detect-child-process
-    exec(`"${ytdlpPath}" --version`, (_error) => {
-      resolve(!_error);
+
+    const ytdlp = spawn(ytdlpPath, ["--version"], {
+      stdio: "ignore",
+      timeout: 10000,
+    });
+
+    ytdlp.on("close", (code) => {
+      resolve(code === 0);
+    });
+
+    ytdlp.on("error", () => {
+      resolve(false);
     });
   });
 }
@@ -258,13 +434,83 @@ ipcMain.handle("select-folder", async () => {
     try {
       await fs.promises.access(selectedPath, fs.constants.W_OK);
       return selectedPath;
-      // eslint-disable-next-line no-unused-vars
-    } catch (_error) {
+    } catch {
       throw { error: "Selected folder is not writable" };
     }
   }
   return null;
 });
+
+// Download thumbnail
+ipcMain.handle(
+  "download-thumbnail",
+  async (event, { url, title, outputPath }) => {
+    if (!url || typeof url !== "string" || !isValidThumbnailUrl(url)) {
+      throw { error: "Invalid thumbnail URL provided" };
+    }
+
+    const extension = getThumbnailExtension(url);
+    const safeTitle = sanitizeFilename(
+      typeof title === "string" && title ? title : "thumbnail"
+    );
+    const filename = `${safeTitle || "thumbnail"}-thumbnail.${extension}`;
+    let destinationPath = "";
+
+    if (outputPath) {
+      if (typeof outputPath !== "string") {
+        throw { error: "Invalid output path provided" };
+      }
+
+      let safePath;
+      try {
+        safePath = normalizeOutputPath(outputPath);
+      } catch (error) {
+        throw {
+          error: error instanceof Error ? error.message : "Invalid output path",
+        };
+      }
+
+      try {
+        const stats = await fs.promises.stat(safePath);
+        if (!stats.isDirectory()) {
+          throw new Error("Output path is not a directory");
+        }
+        await fs.promises.access(safePath, fs.constants.W_OK);
+      } catch {
+        throw { error: "Output path is not writable" };
+      }
+
+      destinationPath = path.join(safePath, filename);
+    } else {
+      const result = await dialog.showSaveDialog(mainWindow, {
+        title: "Save Thumbnail",
+        defaultPath: path.join(app.getPath("downloads"), filename),
+        filters: [
+          { name: "Image", extensions: [extension] },
+          { name: "All Files", extensions: ["*"] },
+        ],
+      });
+
+      if (result.canceled || !result.filePath) {
+        return { success: false, canceled: true };
+      }
+
+      destinationPath = result.filePath;
+    }
+
+    try {
+      await downloadFile(url, destinationPath);
+      return { success: true, path: destinationPath };
+    } catch (error) {
+      throw {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to download thumbnail",
+      };
+    }
+  }
+);
 
 // Download video
 ipcMain.handle(
@@ -275,7 +521,11 @@ ipcMain.handle(
       throw { error: "Invalid URL provided" };
     }
 
-    if (!formatId || typeof formatId !== "string") {
+    if (
+      !formatId ||
+      typeof formatId !== "string" ||
+      !/^[a-zA-Z0-9._-]+$/.test(formatId)
+    ) {
       throw { error: "Invalid format ID provided" };
     }
 
@@ -284,9 +534,20 @@ ipcMain.handle(
     }
 
     // Security: Sanitize and validate output path
-    const safePath = sanitizePath(outputPath);
+    let safePath;
+    try {
+      safePath = normalizeOutputPath(outputPath);
+    } catch (error) {
+      throw {
+        error: error instanceof Error ? error.message : "Invalid output path",
+      };
+    }
 
     try {
+      const stats = await fs.promises.stat(safePath);
+      if (!stats.isDirectory()) {
+        throw new Error("Output path is not a directory");
+      }
       await fs.promises.access(safePath, fs.constants.W_OK);
     } catch {
       throw { error: "Output path is not writable" };

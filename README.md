@@ -1,7 +1,7 @@
 # Scraper
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Electron](https://img.shields.io/badge/Electron-27+-blue.svg)](https://www.electronjs.org/)
+[![Electron](https://img.shields.io/badge/Electron-39+-blue.svg)](https://www.electronjs.org/)
 
 A secure, production-ready Electron desktop application for downloading YouTube videos using yt-dlp. Built with security best practices and a modern, intuitive interface.
 
@@ -22,7 +22,7 @@ This application implements comprehensive security measures:
 - ✅ Context isolation and sandboxing
 - ✅ Input validation and sanitization
 - ✅ Command injection prevention
-- ✅ XSS protection with HTML escaping
+- ✅ XSS protection with safe DOM text rendering
 - ✅ Content Security Policy (CSP)
 - ✅ Path traversal prevention
 - ✅ No remote code execution
@@ -33,18 +33,18 @@ See [SECURITY.md](SECURITY.md) for detailed security information.
 ## Quick Start
 
 ### Prerequisites
-- **Node.js** v16+ ([Download](https://nodejs.org/))
+- **Node.js** v20+ ([Download](https://nodejs.org/))
 - **yt-dlp** ([Installation Guide](INSTALL.md#2-yt-dlp-required))
 
 ### Installation
 
 **Option 1: Download Pre-built App** (Recommended)
-- Download from [Releases](https://github.com/yourusername/scraper/releases)
+- Download from [Releases](https://github.com/namans3398/Scraper/releases)
 - See [INSTALL.md](INSTALL.md) for detailed instructions
 
 **Option 2: Run from Source**
 ```bash
-git clone https://github.com/yourusername/scraper.git
+git clone https://github.com/namans3398/Scraper.git
 cd scraper
 npm install
 npm start
@@ -99,7 +99,7 @@ Common issues and solutions:
 | Permission errors | Select a writable folder (Desktop, Documents, etc.) |
 | App won't start   | Verify Node.js is installed: `node --version`       |
 
-For more help, see [INSTALL.md](INSTALL.md#troubleshooting) or [open an issue](https://github.com/yourusername/scraper/issues).
+For more help, see [INSTALL.md](INSTALL.md#troubleshooting) or [open an issue](https://github.com/namans3398/Scraper/issues).
 
 ## Building from Source
 
@@ -129,7 +129,7 @@ Built packages will be in the `dist/` folder. See [BUILD.md](BUILD.md) for detai
 ## Development
 
 ### Tech Stack
-- Electron 27+
+- Electron 39+
 - Native Node.js APIs
 - yt-dlp CLI tool
 
@@ -170,10 +170,10 @@ This tool is for personal use only. Respect copyright laws and YouTube's Terms o
 ## Support
 
 - ❓ [FAQ](FAQ.md) - Common questions and answers
-- 📖 [Documentation](https://github.com/yourusername/scraper#documentation)
-- 🐛 [Report Issues](https://github.com/yourusername/scraper/issues)
-- 💬 [Discussions](https://github.com/yourusername/scraper/discussions)
-- 📧 Email: support@example.com
+- 📖 [Documentation](https://github.com/namans3398/Scraper#documentation)
+- 🐛 [Report Issues](https://github.com/namans3398/Scraper/issues)
+- 💬 [Discussions](https://github.com/namans3398/Scraper/discussions)
+- Security reports: see [SECURITY.md](SECURITY.md)
 
 ## Acknowledgments
 

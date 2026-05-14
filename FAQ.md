@@ -26,7 +26,7 @@ Yes. Scraper is built with security as a priority:
 
 ### Do I need to install anything else?
 Yes, you need:
-1. **Node.js** (v16 or higher) - only if running from source
+1. **Node.js** (v20 or higher) - only if running from source
 2. **yt-dlp** - required for downloading videos
 
 See [INSTALL.md](INSTALL.md) for detailed instructions.
@@ -155,7 +155,7 @@ No data is sent to any servers except YouTube.
 No, you need internet to fetch video information and download videos. However, the app itself doesn't require internet to start.
 
 ### How do I update Scraper?
-- **Pre-built apps**: Download the latest version from [Releases](https://github.com/yourusername/scraper/releases)
+- **Pre-built apps**: Download the latest version from [Releases](https://github.com/namans3398/Scraper/releases)
 - **From source**: `git pull && npm install`
 
 ### How do I update yt-dlp?
@@ -171,14 +171,14 @@ It's recommended to keep yt-dlp updated for best compatibility.
 Yes! Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### How do I report bugs?
-Open an issue on [GitHub Issues](https://github.com/yourusername/scraper/issues) with:
+Open an issue on [GitHub Issues](https://github.com/namans3398/Scraper/issues) with:
 - Description of the bug
 - Steps to reproduce
 - Your OS and versions
 - Error messages
 
 ### How do I request features?
-Open a feature request on [GitHub Issues](https://github.com/yourusername/scraper/issues) describing:
+Open a feature request on [GitHub Issues](https://github.com/namans3398/Scraper/issues) describing:
 - The feature you'd like
 - Why it would be useful
 - How it should work
@@ -195,14 +195,14 @@ Yes! Scraper is open-source under the MIT License. You can:
 ### Where can I get help?
 - Read the [README](README.md)
 - Check [INSTALL.md](INSTALL.md) for setup help
-- Search [existing issues](https://github.com/yourusername/scraper/issues)
-- Ask in [Discussions](https://github.com/yourusername/scraper/discussions)
-- Open a [new issue](https://github.com/yourusername/scraper/issues/new)
+- Search [existing issues](https://github.com/namans3398/Scraper/issues)
+- Ask in [Discussions](https://github.com/namans3398/Scraper/discussions)
+- Open a [new issue](https://github.com/namans3398/Scraper/issues/new)
 
 ### How do I contact the developers?
 - GitHub Issues for bugs and features
 - GitHub Discussions for questions
-- Email: support@example.com (for security issues)
+- Follow the reporting process in [SECURITY.md](SECURITY.md)
 
 ## Miscellaneous
 

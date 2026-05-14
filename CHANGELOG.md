@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented comprehensive security measures
 - All user inputs validated and sanitized
 - Command injection prevention via spawn arrays
-- HTML escaping to prevent XSS attacks
+- Safe DOM text rendering to prevent XSS attacks
 - Content Security Policy enforced
 - Sandboxed renderer process
 - Context isolation enabled
@@ -76,6 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Links
 
-- [GitHub Repository](https://github.com/yourusername/scraper)
-- [Issue Tracker](https://github.com/yourusername/scraper/issues)
-- [Releases](https://github.com/yourusername/scraper/releases)
+- [GitHub Repository](https://github.com/namans3398/Scraper)
+- [Issue Tracker](https://github.com/namans3398/Scraper/issues)
+- [Releases](https://github.com/namans3398/Scraper/releases)

@@ -21,7 +21,7 @@ This checklist ensures Scraper is ready for production release.
 - [x] Content Security Policy implemented
 - [x] Input validation and sanitization
 - [x] Command injection prevention (spawn with arrays)
-- [x] XSS prevention (HTML escaping)
+- [x] XSS prevention (safe DOM text rendering)
 - [x] Path traversal prevention
 - [x] External navigation blocked
 - [x] DevTools disabled in production

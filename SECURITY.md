@@ -28,14 +28,14 @@ This application implements the following security measures:
 
 ### Data Security
 - Only necessary video metadata is exposed to renderer
-- HTML escaping prevents XSS attacks
+- Safe DOM text rendering prevents XSS attacks
 - Thumbnail URLs validated before display
 - No sensitive data stored or logged
 
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability, please report it via:
-- GitHub Issues: https://github.com/yourusername/scraper/issues (for non-critical issues)
+- GitHub Issues: https://github.com/namans3398/Scraper/issues (for non-critical issues)
 - Email: security@example.com (for critical vulnerabilities)
 
 Please include:

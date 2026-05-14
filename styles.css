@@ -353,6 +353,41 @@ button:disabled {
   gap: 14px;
 }
 
+.thumbnail-frame {
+  position: relative;
+}
+
+.thumbnail-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: rgba(20, 20, 20, 0.88);
+  color: var(--text-primary);
+  backdrop-filter: blur(8px);
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: rgba(31, 31, 31, 0.95);
+  border-color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.icon-btn:disabled {
+  opacity: 0.45;
+}
+
 #thumbnail {
   width: 100%;
   height: auto;
@@ -511,6 +546,13 @@ button:disabled {
   border-radius: 6px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.empty-state {
+  padding: 32px 20px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  text-align: center;
 }
 
 .download-section {
@@ -744,17 +786,6 @@ button:not(:disabled) {
 .loading {
   animation: fadeIn 0.2s ease;
 }
-
-/* Empty state styling */
-.formats-list:empty::after {
-  content: 'No formats available';
-  display: block;
-  padding: 40px;
-  text-align: center;
-  color: var(--text-tertiary);
-  font-size: 14px;
-}
-
 
 /* Video description section */
 .video-description-section {
