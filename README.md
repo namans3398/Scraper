@@ -1,43 +1,62 @@
 # Scraper
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build](https://github.com/namans3398/Scraper/actions/workflows/build.yml/badge.svg)](https://github.com/namans3398/Scraper/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Scraper is an open-source, production-ready desktop application for downloading videos using `yt-dlp`. It is built with Electron and is currently available for macOS only.
+Scraper is a secure, open-source desktop application for downloading videos through `yt-dlp`. It provides a focused Electron interface for fetching video metadata, choosing available formats, selecting an output folder, downloading thumbnails, and tracking download progress.
+
+The first production-ready release is **macOS-first**. Windows and Linux package targets exist in the build configuration for contributor testing, but they are not considered supported release platforms until they have dedicated validation and signing coverage.
 
 ## Features
 
-- Uses `yt-dlp` to fetch video metadata and process downloads.
-- Provides a user interface to select available video and audio formats.
-- Displays download progress.
-- Allows specifying the output directory.
-- Requires Node.js and `yt-dlp` on the host system.
+- Fetch video metadata with `yt-dlp`.
+- Display title, channel, duration, upload metadata, thumbnail, tags, and available formats.
+- Download selected video/audio formats to a user-selected folder.
+- Download thumbnails separately.
+- Detect and update local `yt-dlp` and `ffmpeg` dependencies.
+- Use Electron security controls: context isolation, sandboxing, disabled Node.js integration in the renderer, validated IPC, and a local Content Security Policy.
 
-## Installation and Usage
+## Requirements
 
-See [docs/INSTALL.md](docs/INSTALL.md) for installation and usage instructions.
+- macOS for the supported first release.
+- Node.js 20 or newer for source builds.
+- `yt-dlp` for metadata and video downloads.
+- `ffmpeg` when selected formats require audio/video merging.
 
-## Security
+## Quick Start
 
-This application implements context isolation, sandboxing, and a Content Security Policy (CSP). See [docs/SECURITY.md](docs/SECURITY.md).
+```bash
+git clone https://github.com/namans3398/Scraper.git
+cd Scraper
+npm install
+npm start
+```
 
-## Development and Building
+Run the full local quality gate before opening a pull request:
 
-See [docs/BUILD.md](docs/BUILD.md) and [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for build procedures and architectural details.
+```bash
+npm run check
+```
 
 ## Documentation
 
 - [Installation Guide](docs/INSTALL.md)
 - [Building from Source](docs/BUILD.md)
-- [Security](docs/SECURITY.md)
+- [Security Policy](docs/SECURITY.md)
 - [Project Structure](docs/PROJECT_STRUCTURE.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Code of Conduct](docs/CODE_OF_CONDUCT.md)
 - [FAQ](docs/FAQ.md)
+- [Production Checklist](docs/PRODUCTION_CHECKLIST.md)
+
+## Release Status
+
+Public binaries for the first release should be published as an unsigned draft GitHub release until code signing and notarization are configured. macOS users may need to approve the app manually in System Settings when testing unsigned builds.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Scraper is licensed under the [MIT License](LICENSE).
 
-## Disclaimer
+## Legal Notice
 
-This tool is a frontend for `yt-dlp`. Ensure you comply with the terms of service of the websites you access and respect local copyright laws.
+Scraper is a graphical frontend for `yt-dlp`. Use it only with content you have the right to access and download. You are responsible for complying with website terms of service, copyright law, and local regulations.

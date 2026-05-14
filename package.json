@@ -1,7 +1,7 @@
 {
   "name": "scraper",
   "version": "1.0.0",
-  "description": "Secure desktop video downloader powered by yt-dlp",
+  "description": "Secure macOS desktop video downloader powered by yt-dlp",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -48,7 +48,7 @@
     "typescript": "5.9.3"
   },
   "build": {
-    "appId": "com.scraper.app",
+    "appId": "com.namans3398.scraper",
     "productName": "Scraper",
     "copyright": "Copyright © 2026 Scraper Contributors",
     "directories": {
@@ -81,6 +81,7 @@
     "mac": {
       "icon": "icon.icns",
       "category": "public.app-category.utilities",
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
@@ -120,6 +121,7 @@
     },
     "win": {
       "icon": "icon.png",
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -145,6 +147,7 @@
     },
     "linux": {
       "icon": "icon.png",
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
       "target": [
         {
           "target": "AppImage",
@@ -168,8 +171,8 @@
       "category": "Utility",
       "maintainer": "Scraper Contributors",
       "vendor": "Scraper",
-      "synopsis": "YouTube Video Downloader",
-      "description": "A secure Electron application for downloading YouTube videos using yt-dlp"
+      "synopsis": "Secure video downloader",
+      "description": "A secure Electron application for downloading videos using yt-dlp"
     }
   }
 }

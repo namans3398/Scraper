@@ -22,6 +22,12 @@ Describe any alternative solutions or features you've considered.
 ## Use Case
 Describe how this feature would be used and who would benefit from it.
 
+## Platform Impact
+Does this affect the supported macOS release, experimental Windows/Linux packaging, or both?
+
+## Security and Legal Impact
+Describe any impact on URL handling, file paths, dependency downloads, external command execution, or user compliance responsibilities.
+
 ## Additional Context
 Add any other context, mockups, or screenshots about the feature request here.
 

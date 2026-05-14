@@ -1,4 +1,4 @@
-name: Build
+name: Build and Package
 
 on:
   workflow_dispatch:
@@ -40,8 +40,11 @@ jobs:
       - name: Run lint, type-check, and tests
         run: npm run check
 
+      - name: Audit production readiness dependencies
+        run: npm audit --audit-level=moderate
+
   package:
-    name: Package / ${{ matrix.os }}
+    name: Package experimental artifacts / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: validate
     timeout-minutes: 45
@@ -70,6 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "macOS is the supported first-release platform. Windows and Linux artifacts are experimental contributor outputs."
           case "$RUNNER_OS" in
             macOS) npm run build:mac ;;
             Windows) npm run build:win ;;

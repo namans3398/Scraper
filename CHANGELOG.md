@@ -2,10 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Changed
+- Clarified macOS-first release support and experimental Windows/Linux packaging status.
+- Expanded open-source documentation, security policy, contribution guidance, and production release checklist.
+- Aligned project branding, MIT licensing language, and release readiness guidance.
+
 ## [1.0.0] - 2026-05-14
 ### Added
 - Initial stable release.
 - Support for fetching metadata and choosing file formats using `yt-dlp`.
-- Build support for macOS.
+- Supported macOS release packaging.
 - Download progress tracking.
 - MIT License.

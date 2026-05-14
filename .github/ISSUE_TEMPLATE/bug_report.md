@@ -25,10 +25,11 @@ What actually happened.
 If applicable, add screenshots to help explain your problem.
 
 ## Environment
-- **OS**: [e.g., macOS 14.0, Windows 11, Ubuntu 22.04]
+- **OS**: [e.g., macOS 14.0. Windows/Linux packages are experimental.]
 - **App Version**: [e.g., 1.0.0]
 - **Node.js Version**: [run `node --version`]
 - **yt-dlp Version**: [run `yt-dlp --version`]
+- **ffmpeg Version**: [run `ffmpeg -version` if the issue involves merged formats]
 
 ## Error Messages
 ```
@@ -37,3 +38,7 @@ Paste any error messages here
 
 ## Additional Context
 Add any other context about the problem here.
+
+## Legal / Access Check
+- [ ] The URL is public or otherwise accessible to me.
+- [ ] I have the right to access and download the content involved in this report.

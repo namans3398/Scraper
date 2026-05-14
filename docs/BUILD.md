@@ -1,20 +1,57 @@
 # Building Scraper
 
-This guide details how to build Scraper for distribution. The project uses `electron-builder`.
+Scraper uses `electron-builder` for packaging and npm scripts for validation.
 
 ## Prerequisites
 
--   Node.js v20+
--   `npm` or `yarn`
+- Node.js 20 or newer.
+- npm, using the committed `package-lock.json`.
+- macOS for the supported release build.
 
-## Build Commands
+Install dependencies with:
 
-To build the application for different platforms, use the following commands:
+```bash
+npm ci
+```
 
--   **macOS**: `npm run build:mac`
+Use `npm install` during local development when intentionally updating dependencies.
 
-The build output will be placed in the `dist/` directory.
+## Quality Gate
 
-## Build Configuration
+Run this before packaging or opening a pull request:
 
-The `build` section of `package.json` configures `electron-builder` to bundle the application using files like `main.js`, `preload.js`, and `renderer.js`, ignoring unnecessary files.
+```bash
+npm run check
+```
+
+`npm run check` runs ESLint, TypeScript checking, and the Node test suite.
+
+## Supported Release Build
+
+Build the supported macOS package:
+
+```bash
+npm run build:mac
+```
+
+Artifacts are written to `dist/`.
+
+## Experimental Package Targets
+
+The repository also includes Windows and Linux package scripts:
+
+```bash
+npm run build:win
+npm run build:linux
+npm run build:all
+```
+
+These targets are for contributor testing until the project has platform-specific validation, signing, and release notes. Do not advertise them as supported end-user releases yet.
+
+## CI
+
+The GitHub Actions workflow validates the project on Node.js 20 and 22, then packages macOS, Windows, and Linux artifacts. Only the macOS artifact is part of the first supported release policy.
+
+## Signing Status
+
+Current release artifacts are unsigned. Before publishing stable public binaries, configure macOS Developer ID signing and notarization, and add equivalent signing policy for any future Windows release.

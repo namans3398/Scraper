@@ -22,9 +22,11 @@ Fixes #(issue number)
 
 ## Testing
 Describe the tests you ran to verify your changes:
+- [ ] `npm run check`
+- [ ] `npm audit --audit-level=moderate`
 - [ ] Tested on macOS
-- [ ] Tested on Windows
-- [ ] Tested on Linux
+- [ ] Tested Windows packaging only if this change affects experimental Windows artifacts
+- [ ] Tested Linux packaging only if this change affects experimental Linux artifacts
 - [ ] Tested video info fetching
 - [ ] Tested download functionality
 - [ ] Tested error handling
@@ -36,16 +38,16 @@ Add screenshots to demonstrate the changes.
 ## Checklist
 - [ ] My code follows the project's code style
 - [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings or errors
 - [ ] I have tested my changes thoroughly
 - [ ] Any dependent changes have been merged and published
+- [ ] I have not described Windows or Linux as supported end-user platforms without release validation
 
 ## Security Considerations
 - [ ] I have validated all user inputs
 - [ ] I have prevented command injection vulnerabilities
-- [ ] I have escaped HTML to prevent XSS
+- [ ] I have avoided unsafe renderer HTML injection
 - [ ] I have not introduced any security vulnerabilities
 
 ## Additional Notes

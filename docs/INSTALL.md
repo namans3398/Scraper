@@ -1,30 +1,52 @@
 # Installation Guide
 
-## Prerequisites
+Scraper's first production-ready release is macOS-first. Windows and Linux builds may be produced by CI for contributor testing, but they are experimental until validated and signed.
 
-1.  **Node.js**: Version 20 or higher.
-2.  **yt-dlp**: Required for fetching metadata and downloading content.
+## Supported Platform
 
-### Installing yt-dlp
+- macOS 13 or newer is the supported target for the first public release.
+- Windows and Linux support is not guaranteed for end users yet.
 
--   **macOS**: `brew install yt-dlp`
--   **Windows**: `winget install yt-dlp` or `scoop install yt-dlp`
--   **Linux**: Check your package manager (e.g., `apt install yt-dlp` or `pacman -S yt-dlp`)
+## Runtime Dependencies
 
-Ensure `yt-dlp` is available in your system path by running `yt-dlp --version`.
+Scraper uses external command-line tools:
 
-## Running from Source
+- `yt-dlp` is required to fetch metadata and download videos.
+- `ffmpeg` is required when a selected format needs audio/video merging.
 
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/namans3398/Scraper.git
-    cd Scraper
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Start the application:
-    ```bash
-    npm start
-    ```
+The app can use dependencies installed in a user-selected dependency folder, or tools already available on the system path.
+
+## Install Dependencies on macOS
+
+Using Homebrew:
+
+```bash
+brew install yt-dlp ffmpeg
+```
+
+Verify the tools are available:
+
+```bash
+yt-dlp --version
+ffmpeg -version
+```
+
+## Run from Source
+
+```bash
+git clone https://github.com/namans3398/Scraper.git
+cd Scraper
+npm install
+npm start
+```
+
+## Unsigned macOS Builds
+
+Until the project has signing and notarization configured, GitHub release builds should be treated as unsigned test artifacts. macOS may block the first launch. Review the source, download only from the official repository, and approve the app manually in System Settings only if you trust the build.
+
+## Troubleshooting
+
+- If metadata fetches fail, update `yt-dlp`.
+- If combined video/audio downloads fail, install or update `ffmpeg`.
+- If downloads cannot start, confirm the selected output folder is writable.
+- If the app cannot find dependencies, use the in-app dependency folder flow or install the tools through Homebrew.
