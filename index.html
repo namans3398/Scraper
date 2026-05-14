@@ -153,6 +153,57 @@
           <div id="error" class="error hidden"></div>
         </div>
       </div>
+
+      <!-- Dependency Modal -->
+      <div id="dependencyModal" class="modal hidden">
+        <div class="modal-content">
+          <h2 class="modal-title" id="dependencyTitle">
+            Dependencies Required
+          </h2>
+          <div class="modal-body">
+            <p id="dependencyMessage">
+              yt-dlp and ffmpeg are required to download videos. Please install
+              or update them to continue.
+            </p>
+            <div class="dependency-status">
+              <div class="dep-item">
+                <span class="dep-name">yt-dlp</span>
+                <span class="dep-state" id="ytdlpState">Checking...</span>
+              </div>
+              <div class="dep-item">
+                <span class="dep-name">ffmpeg</span>
+                <span class="dep-state" id="ffmpegState">Checking...</span>
+              </div>
+            </div>
+
+            <div
+              id="dependencyFolderSection"
+              class="dependency-folder-section hidden"
+            >
+              <p class="section-label">Select installation folder:</p>
+              <div class="folder-select">
+                <input
+                  type="text"
+                  id="dependencyPathInput"
+                  placeholder="Choose a folder..."
+                  readonly
+                />
+                <button id="dependencyBrowseBtn">Browse</button>
+              </div>
+            </div>
+
+            <div id="dependencyProgress" class="dependency-progress hidden">
+              <p id="dependencyProgressText">Please wait...</p>
+              <div class="spinner small"></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button id="dependencyActionBtn" class="primary-btn">
+              Download & Install
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="renderer.js"></script>

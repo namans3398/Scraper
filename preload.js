@@ -61,6 +61,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   cancelDownload: () => ipcRenderer.invoke("cancel-download"),
 
+  checkDependencies: () => ipcRenderer.invoke("check-dependencies"),
+  downloadDependencies: (location) =>
+    ipcRenderer.invoke("download-dependencies", location),
+  updateDependencies: () => ipcRenderer.invoke("update-dependencies"),
+
   /**
    * @param {Function} callback
    */

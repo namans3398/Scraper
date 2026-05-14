@@ -18,6 +18,33 @@ let selectedOutputPath = null;
 let isDownloading = false;
 /** @type {Function | null} */
 let progressCleanup = null;
+let dependencyLocation = null;
+
+// Modal Elements
+const dependencyModal = document.getElementById("dependencyModal");
+const dependencyTitle = document.getElementById("dependencyTitle");
+const dependencyMessage = document.getElementById("dependencyMessage");
+const ytdlpState = document.getElementById("ytdlpState");
+const ffmpegState = document.getElementById("ffmpegState");
+const dependencyFolderSection = document.getElementById(
+  "dependencyFolderSection",
+);
+/** @type {HTMLInputElement} */
+const dependencyPathInput = /** @type {HTMLInputElement} */ (
+  document.getElementById("dependencyPathInput")
+);
+/** @type {HTMLButtonElement} */
+const dependencyBrowseBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("dependencyBrowseBtn")
+);
+/** @type {HTMLButtonElement} */
+const dependencyActionBtn = /** @type {HTMLButtonElement} */ (
+  document.getElementById("dependencyActionBtn")
+);
+const dependencyProgress = document.getElementById("dependencyProgress");
+const dependencyProgressText = document.getElementById(
+  "dependencyProgressText",
+);
 
 /** @type {HTMLInputElement} */
 const urlInput = /** @type {HTMLInputElement} */ (
@@ -680,4 +707,116 @@ function goBackToHome() {
   hideVideoInfo();
   hideError();
   hideLoading();
+}
+
+// Dependency Management Logic
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const deps = await window.electronAPI.checkDependencies();
+    const needsUpdate = deps.ytdlpOutdated;
+    const isMissing = !deps.ytdlp || !deps.ffmpeg;
+
+    if (isMissing || needsUpdate) {
+      if (dependencyModal) dependencyModal.classList.remove("hidden");
+
+      if (isMissing) {
+        if (dependencyTitle)
+          dependencyTitle.textContent = "Dependencies Required";
+        if (dependencyMessage)
+          dependencyMessage.textContent =
+            "yt-dlp and ffmpeg are required to download videos. Please select an installation folder and install them.";
+        if (dependencyFolderSection)
+          dependencyFolderSection.classList.remove("hidden");
+        if (dependencyActionBtn)
+          dependencyActionBtn.textContent = "Download & Install";
+      } else if (needsUpdate) {
+        if (dependencyTitle) dependencyTitle.textContent = "Update Available";
+        if (dependencyMessage)
+          dependencyMessage.textContent =
+            "An update for the download engine (yt-dlp) is available. Updating is recommended to avoid download failures.";
+        if (dependencyFolderSection)
+          dependencyFolderSection.classList.add("hidden");
+        if (dependencyActionBtn) dependencyActionBtn.textContent = "Update Now";
+      }
+
+      // Update indicators
+      if (ytdlpState) {
+        ytdlpState.textContent = deps.ytdlp
+          ? deps.ytdlpOutdated
+            ? "Outdated"
+            : "Installed"
+          : "Missing";
+        ytdlpState.className =
+          "dep-state " +
+          (deps.ytdlp
+            ? deps.ytdlpOutdated
+              ? "outdated"
+              : "installed"
+            : "missing");
+      }
+
+      if (ffmpegState) {
+        ffmpegState.textContent = deps.ffmpeg ? "Installed" : "Missing";
+        ffmpegState.className =
+          "dep-state " + (deps.ffmpeg ? "installed" : "missing");
+      }
+    }
+  } catch (error) {
+    console.error("Failed to check dependencies:", error);
+  }
+});
+
+if (dependencyBrowseBtn) {
+  dependencyBrowseBtn.addEventListener("click", async () => {
+    try {
+      const folder = await window.electronAPI.selectFolder();
+      if (folder && dependencyPathInput) {
+        dependencyLocation = folder;
+        dependencyPathInput.value = folder;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+}
+
+if (dependencyActionBtn) {
+  dependencyActionBtn.addEventListener("click", async () => {
+    const isInstall = dependencyActionBtn.textContent.includes("Install");
+
+    if (isInstall && !dependencyLocation) {
+      window.alert("Please select an installation folder first!");
+      return;
+    }
+
+    dependencyActionBtn.disabled = true;
+    if (dependencyBrowseBtn) dependencyBrowseBtn.disabled = true;
+    if (dependencyProgress) dependencyProgress.classList.remove("hidden");
+
+    try {
+      if (isInstall) {
+        if (dependencyProgressText)
+          dependencyProgressText.textContent =
+            "Downloading binaries... This may take a few minutes.";
+        await window.electronAPI.downloadDependencies(dependencyLocation);
+      } else {
+        if (dependencyProgressText)
+          dependencyProgressText.textContent = "Updating yt-dlp...";
+        await window.electronAPI.updateDependencies();
+      }
+
+      // On success, hide modal
+      if (dependencyModal) dependencyModal.classList.add("hidden");
+
+      // Refresh state
+      window.alert(
+        isInstall ? "Dependencies installed successfully!" : "Update complete!",
+      );
+    } catch (err) {
+      if (dependencyProgressText)
+        dependencyProgressText.textContent = `Error: ${err.message || "Failed"}`;
+      dependencyActionBtn.disabled = false;
+      if (dependencyBrowseBtn) dependencyBrowseBtn.disabled = false;
+    }
+  });
 }
