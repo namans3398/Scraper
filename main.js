@@ -10,9 +10,20 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
-const http = require("http");
 const https = require("https");
 const { URL } = require("url");
+const {
+  downloadBinary,
+  downloadFile,
+  extractArchive,
+  getThumbnailExtension,
+  isNewerVersion,
+  isValidThumbnailUrl,
+  isValidYouTubeUrl,
+  normalizeOutputPath,
+  prepareDependencyDirectory,
+  sanitizeFilename,
+} = require("./lib/core");
 
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
@@ -43,7 +54,7 @@ function saveConfig(updates) {
   if (fs.existsSync(configFilePath)) {
     try {
       config = JSON.parse(fs.readFileSync(configFilePath, "utf8"));
-    } catch (e) {
+    } catch {
       /* ignore */
     }
   }
@@ -51,52 +62,175 @@ function saveConfig(updates) {
   fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
 }
 
-function getYtDlpPath() {
-  const customPath = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
+function getYtDlpExecutableName() {
+  return process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
+}
+
+function getFfmpegExecutableName() {
+  return process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
+}
+
+/**
+ * @param {string} executableName
+ * @param {string[]} commonPaths
+ * @returns {string[]}
+ */
+function getExecutableCandidates(executableName, commonPaths) {
+  const candidates = [];
+
   if (userDependencyPath) {
-    const fullPath = path.join(userDependencyPath, customPath);
-    if (fs.existsSync(fullPath)) return fullPath;
+    candidates.push(path.join(userDependencyPath, executableName));
   }
 
-  const commonPaths = [
+  candidates.push(...commonPaths);
+  candidates.push(executableName);
+
+  return Array.from(new Set(candidates));
+}
+
+function getYtDlpCandidates() {
+  return getExecutableCandidates(getYtDlpExecutableName(), [
     "/opt/homebrew/bin/yt-dlp", // Apple Silicon Homebrew
     "/usr/local/bin/yt-dlp", // Intel Homebrew
     "/usr/bin/yt-dlp", // System install
     path.join(process.env.HOME || "/tmp", ".local/bin/yt-dlp"), // User install
-  ];
-
-  // Check common paths first
-  for (const ytdlpPath of commonPaths) {
-    if (fs.existsSync(ytdlpPath)) {
-      return ytdlpPath;
-    }
-  }
-
-  // Fall back to PATH lookup
-  return "yt-dlp";
+  ]);
 }
 
-function getFfmpegPath() {
-  const customPath = process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
-  if (userDependencyPath) {
-    const fullPath = path.join(userDependencyPath, customPath);
-    if (fs.existsSync(fullPath)) return fullPath;
-  }
-
-  const commonPaths = [
+function getFfmpegCandidates() {
+  return getExecutableCandidates(getFfmpegExecutableName(), [
     "/opt/homebrew/bin/ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/usr/bin/ffmpeg",
     path.join(process.env.HOME || "/tmp", ".local/bin/ffmpeg"),
-  ];
+  ]);
+}
 
-  for (const ffmpegPath of commonPaths) {
-    if (fs.existsSync(ffmpegPath)) {
-      return ffmpegPath;
+/**
+ * @param {unknown} error
+ * @param {string} fallback
+ * @returns {Error}
+ */
+function toError(error, fallback) {
+  if (error instanceof Error) return error;
+
+  if (error && typeof error === "object") {
+    const maybeError = /** @type {{ error?: unknown, message?: unknown, details?: unknown }} */ (
+      error
+    );
+    const message =
+      typeof maybeError.error === "string"
+        ? maybeError.error
+        : typeof maybeError.message === "string"
+          ? maybeError.message
+          : fallback;
+    const details =
+      typeof maybeError.details === "string" && maybeError.details.trim()
+        ? `\n${maybeError.details.trim()}`
+        : "";
+    return new Error(`${message}${details}`);
+  }
+
+  return new Error(fallback);
+}
+
+/**
+ * @param {string} executablePath
+ * @param {string[]} args
+ * @returns {Promise<{ ok: boolean, stdout: string, stderr: string }>}
+ */
+function runExecutable(executablePath, args) {
+  return new Promise((resolve) => {
+    const child = spawn(executablePath, args, {
+      timeout: 10000,
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    child.on("close", (code) => {
+      resolve({ ok: code === 0, stdout: stdout.trim(), stderr: stderr.trim() });
+    });
+
+    child.on("error", (error) => {
+      resolve({ ok: false, stdout: "", stderr: error.message });
+    });
+  });
+}
+
+/**
+ * @param {string[]} candidates
+ * @param {string[]} versionArgs
+ * @param {boolean} preferNewest
+ * @returns {Promise<{ available: boolean, path: string, version: string, candidates: Array<{ path: string, version: string }> }>}
+ */
+async function resolveExecutable(candidates, versionArgs, preferNewest = false) {
+  const availableCandidates = [];
+
+  for (const candidate of candidates) {
+    const result = await runExecutable(candidate, versionArgs);
+    if (result.ok) {
+      availableCandidates.push({
+        path: candidate,
+        version: result.stdout || result.stderr,
+      });
     }
   }
 
-  return "ffmpeg";
+  if (availableCandidates.length === 0) {
+    return { available: false, path: "", version: "", candidates: [] };
+  }
+
+  const selected = preferNewest
+    ? availableCandidates.reduce((best, candidate) =>
+        isNewerVersion(candidate.version, best.version) ? candidate : best,
+      )
+    : availableCandidates[0];
+
+  return {
+    available: true,
+    path: selected.path,
+    version: selected.version,
+    candidates: availableCandidates,
+  };
+}
+
+function resolveYtDlp() {
+  return resolveExecutable(getYtDlpCandidates(), ["--version"], true);
+}
+
+function resolveFfmpeg() {
+  return resolveExecutable(getFfmpegCandidates(), ["-version"], false);
+}
+
+/**
+ * @param {string} command
+ * @param {string[]} args
+ * @returns {Promise<{ code: number | null, stderr: string }>}
+ */
+function runCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args);
+    let stderr = "";
+
+    child.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    child.on("close", (code) => {
+      resolve({ code, stderr });
+    });
+
+    child.on("error", reject);
+  });
 }
 
 /**
@@ -192,242 +326,28 @@ app.on("activate", () => {
   }
 });
 
-// Utility: Validate YouTube URL
-/**
- * @param {string} urlString
- * @returns {boolean}
- */
-function isValidYouTubeUrl(urlString) {
-  try {
-    const url = new URL(urlString);
-    const hostname = url.hostname.toLowerCase();
-
-    if (url.protocol !== "https:" && url.protocol !== "http:") {
-      return false;
-    }
-
-    return (
-      hostname === "youtu.be" ||
-      hostname === "youtube.com" ||
-      hostname.endsWith(".youtube.com")
-    );
-  } catch {
-    return false;
-  }
-}
-
-// Utility: Validate and normalize output directories received over IPC.
-/**
- * @param {string} filePath
- * @returns {string}
- */
-function normalizeOutputPath(filePath) {
-  if (filePath.includes("\0")) {
-    throw new Error("Output path contains invalid characters");
-  }
-
-  if (!path.isAbsolute(filePath)) {
-    throw new Error("Output path must be absolute");
-  }
-
-  return path.resolve(filePath);
-}
-
-/**
- * @param {string} filename
- * @returns {string}
- */
-function sanitizeFilename(filename) {
-  return Array.from(filename)
-    .filter((character) => {
-      const code = character.charCodeAt(0);
-      return code > 31 && !'<>:"/\\|?*'.includes(character);
-    })
-    .join("")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120);
-}
-
-/**
- * @param {string} thumbnailUrl
- * @returns {string}
- */
-function getThumbnailExtension(thumbnailUrl) {
-  try {
-    const extension = path
-      .extname(new URL(thumbnailUrl).pathname)
-      .toLowerCase()
-      .replace(".", "");
-
-    if (["jpg", "jpeg", "png", "webp"].includes(extension)) {
-      return extension === "jpeg" ? "jpg" : extension;
-    }
-  } catch {
-    // Fall through to the default extension.
-  }
-
-  return "jpg";
-}
-
-/**
- * @param {string} thumbnailUrl
- * @returns {boolean}
- */
-function isValidThumbnailUrl(thumbnailUrl) {
-  try {
-    const parsedUrl = new URL(thumbnailUrl);
-    return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-/**
- * @param {string} sourceUrl
- * @param {string} destinationPath
- * @param {number} redirectsRemaining
- * @returns {Promise<void>}
- */
-function downloadFile(sourceUrl, destinationPath, redirectsRemaining = 5) {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(sourceUrl);
-    const client = parsedUrl.protocol === "https:" ? https : http;
-    const tempPath = `${destinationPath}.${Date.now()}.download`;
-    const request = client.get(parsedUrl, (response) => {
-      const statusCode = response.statusCode || 0;
-
-      if (
-        statusCode >= 300 &&
-        statusCode < 400 &&
-        response.headers.location &&
-        redirectsRemaining > 0
-      ) {
-        response.resume();
-        const redirectUrl = new URL(response.headers.location, sourceUrl).href;
-        downloadFile(redirectUrl, destinationPath, redirectsRemaining - 1)
-          .then(resolve)
-          .catch(reject);
-        return;
-      }
-
-      if (statusCode !== 200) {
-        response.resume();
-        reject(new Error(`Thumbnail request failed with status ${statusCode}`));
-        return;
-      }
-
-      const contentLength = Number(response.headers["content-length"] || 0);
-      const maxBytes = 20 * 1024 * 1024;
-      if (contentLength > maxBytes) {
-        response.resume();
-        reject(new Error("Thumbnail file is too large"));
-        return;
-      }
-
-      let receivedBytes = 0;
-      const fileStream = fs.createWriteStream(tempPath, { flags: "wx" });
-
-      response.on("data", (chunk) => {
-        receivedBytes += chunk.length;
-        if (receivedBytes > maxBytes) {
-          request.destroy(new Error("Thumbnail file is too large"));
-        }
-      });
-
-      fileStream.on("finish", () => {
-        fileStream.close(async (error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-
-          try {
-            await fs.promises.rename(tempPath, destinationPath);
-            resolve();
-          } catch (renameError) {
-            fs.promises.unlink(tempPath).catch(() => {});
-            reject(renameError);
-          }
-        });
-      });
-
-      fileStream.on("error", (error) => {
-        response.destroy();
-        fs.promises.unlink(tempPath).catch(() => {});
-        reject(error);
-      });
-
-      response.pipe(fileStream);
-    });
-
-    request.setTimeout(30000, () => {
-      request.destroy(new Error("Thumbnail download timed out"));
-    });
-
-    request.on("error", (error) => {
-      fs.promises.unlink(tempPath).catch(() => {});
-      reject(error);
-    });
-  });
-}
-
-// Utility: Check if yt-dlp is available
-/**
- * @param {string} executablePath
- * @param {string[]} args
- * @returns {Promise<boolean>}
- */
-function checkExecutableAvailable(executablePath, args) {
-  return new Promise((resolve) => {
-    const child = spawn(executablePath, args, {
-      stdio: "ignore",
-      timeout: 10000,
-    });
-
-    child.on("close", (code) => {
-      resolve(code === 0);
-    });
-
-    child.on("error", () => {
-      resolve(false);
-    });
-  });
-}
-
-// Utility: Check if yt-dlp is available
-function checkYtDlpAvailable() {
-  return checkExecutableAvailable(getYtDlpPath(), ["--version"]);
-}
-
-function checkFfmpegAvailable() {
-  return checkExecutableAvailable(getFfmpegPath(), ["-version"]);
-}
-
 // Get video info
 ipcMain.handle("get-video-info", async (event, url) => {
   // Security: Validate URL
   if (!url || typeof url !== "string") {
-    throw { error: "Invalid URL provided" };
+    throw new Error("Invalid URL provided");
   }
 
   if (!isValidYouTubeUrl(url)) {
-    throw { error: "Please provide a valid YouTube URL" };
+    throw new Error("Please provide a valid YouTube URL");
   }
 
   // Check if yt-dlp is available
-  const ytdlpAvailable = await checkYtDlpAvailable();
-  if (!ytdlpAvailable) {
-    throw {
-      error:
-        "yt-dlp is not installed or not found in PATH. Please install it first.",
-    };
+  const ytdlpInfo = await resolveYtDlp();
+  if (!ytdlpInfo.available) {
+    throw new Error(
+      "yt-dlp is not installed or not found. Install it in the dependency folder or with Homebrew/pip.",
+    );
   }
 
   return new Promise((resolve, reject) => {
     // Security: Use array format to prevent command injection
-    const ytdlpPath = getYtDlpPath();
-    const ytdlp = spawn(ytdlpPath, ["-J", "--no-warnings", url], {
+    const ytdlp = spawn(ytdlpInfo.path, ["-J", "--no-warnings", url], {
       timeout: 30000, // 30 second timeout
     });
 
@@ -474,21 +394,31 @@ ipcMain.handle("get-video-info", async (event, url) => {
           };
           resolve(safeData);
         } catch (e) {
-          reject({
-            error: "Failed to parse video information",
-            details: e instanceof Error ? e.message : String(e),
-          });
+          reject(
+            toError(
+              {
+                error: "Failed to parse video information",
+                details: e instanceof Error ? e.message : String(e),
+              },
+              "Failed to parse video information",
+            ),
+          );
         }
       } else {
-        reject({
-          error: "Failed to fetch video information",
-          details: stderr || "Unknown error",
-        });
+        reject(
+          toError(
+            {
+              error: "Failed to fetch video information",
+              details: stderr || "Unknown error",
+            },
+            "Failed to fetch video information",
+          ),
+        );
       }
     });
 
     ytdlp.on("error", (error) => {
-      reject({ error: "Failed to execute yt-dlp", details: error.message });
+      reject(new Error(`Failed to execute yt-dlp: ${error.message}`));
     });
   });
 });
@@ -508,7 +438,7 @@ ipcMain.handle("select-folder", async () => {
       await fs.promises.access(selectedPath, fs.constants.W_OK);
       return selectedPath;
     } catch {
-      throw { error: "Selected folder is not writable" };
+      throw new Error("Selected folder is not writable");
     }
   }
   return null;
@@ -519,7 +449,7 @@ ipcMain.handle(
   "download-thumbnail",
   async (event, { url, title, outputPath }) => {
     if (!url || typeof url !== "string" || !isValidThumbnailUrl(url)) {
-      throw { error: "Invalid thumbnail URL provided" };
+      throw new Error("Invalid thumbnail URL provided");
     }
 
     const extension = getThumbnailExtension(url);
@@ -531,16 +461,14 @@ ipcMain.handle(
 
     if (outputPath) {
       if (typeof outputPath !== "string") {
-        throw { error: "Invalid output path provided" };
+        throw new Error("Invalid output path provided");
       }
 
       let safePath;
       try {
         safePath = normalizeOutputPath(outputPath);
       } catch (error) {
-        throw {
-          error: error instanceof Error ? error.message : "Invalid output path",
-        };
+        throw toError(error, "Invalid output path");
       }
 
       try {
@@ -550,7 +478,7 @@ ipcMain.handle(
         }
         await fs.promises.access(safePath, fs.constants.W_OK);
       } catch {
-        throw { error: "Output path is not writable" };
+        throw new Error("Output path is not writable");
       }
 
       destinationPath = path.join(safePath, filename);
@@ -575,12 +503,7 @@ ipcMain.handle(
       await downloadFile(url, destinationPath);
       return { success: true, path: destinationPath };
     } catch (error) {
-      throw {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to download thumbnail",
-      };
+      throw toError(error, "Failed to download thumbnail");
     }
   },
 );
@@ -626,15 +549,14 @@ ipcMain.handle(
       throw new Error("Output path is not writable");
     }
 
-    // Check if yt-dlp is available
-    const ytdlpAvailable = await checkYtDlpAvailable();
-    if (!ytdlpAvailable) {
+    const ytdlpInfo = await resolveYtDlp();
+    if (!ytdlpInfo.available) {
       throw new Error("yt-dlp is not installed or not found in PATH");
     }
 
     if (formatId.includes("+")) {
-      const ffmpegAvailable = await checkFfmpegAvailable();
-      if (!ffmpegAvailable) {
+      const ffmpegInfo = await resolveFfmpeg();
+      if (!ffmpegInfo.available) {
         throw new Error(
           "This format needs ffmpeg to merge video and audio. Install ffmpeg or choose a Video + Audio format.",
         );
@@ -647,7 +569,6 @@ ipcMain.handle(
       let stderr = "";
 
       // Security: Use array format to prevent command injection
-      const ytdlpPath = getYtDlpPath();
       const args = [
         "-f",
         formatId,
@@ -660,7 +581,7 @@ ipcMain.handle(
         url,
       ];
 
-      const ytdlp = spawn(ytdlpPath, args, {
+      const ytdlp = spawn(ytdlpInfo.path, args, {
         timeout: 3600000, // 1 hour timeout for large downloads
       });
 
@@ -721,23 +642,17 @@ ipcMain.handle("cancel-download", async () => {
 
 // Dependency Management
 ipcMain.handle("check-dependencies", async () => {
-  const ytdlp = await checkYtDlpAvailable();
-  const ffmpeg = await checkFfmpegAvailable();
+  const [ytdlpInfo, ffmpegInfo] = await Promise.all([
+    resolveYtDlp(),
+    resolveFfmpeg(),
+  ]);
 
   let ytdlpOutdated = false;
-  if (ytdlp) {
+  let latestVersionInfo = null;
+  if (ytdlpInfo.available) {
     try {
-      // Check local version
-      const ytdlpPath = getYtDlpPath();
-      const localVersionInfo = await new Promise((resolve) => {
-        const child = spawn(ytdlpPath, ["--version"]);
-        let out = "";
-        child.stdout.on("data", (d) => (out += d.toString()));
-        child.on("close", () => resolve(out.trim()));
-      });
-
       // Fetch latest release tag from GitHub API
-      const latestVersionInfo = await new Promise((resolve) => {
+      latestVersionInfo = await new Promise((resolve) => {
         const req = https.get(
           "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest",
           {
@@ -772,9 +687,8 @@ ipcMain.handle("check-dependencies", async () => {
 
       if (
         latestVersionInfo &&
-        localVersionInfo &&
-        latestVersionInfo !== localVersionInfo &&
-        latestVersionInfo > localVersionInfo
+        ytdlpInfo.version &&
+        isNewerVersion(latestVersionInfo, ytdlpInfo.version)
       ) {
         ytdlpOutdated = true;
       }
@@ -783,106 +697,22 @@ ipcMain.handle("check-dependencies", async () => {
     }
   }
 
-  return { ytdlp, ffmpeg, ytdlpOutdated };
+  return {
+    ytdlp: ytdlpInfo.available,
+    ffmpeg: ffmpegInfo.available,
+    ytdlpOutdated,
+    ytdlpPath: ytdlpInfo.path,
+    ffmpegPath: ffmpegInfo.path,
+    ytdlpVersion: ytdlpInfo.version,
+    latestYtDlpVersion: latestVersionInfo,
+    configuredDependencyPath: userDependencyPath,
+  };
 });
 
-function downloadBinary(url, destPath) {
-  return new Promise((resolve, reject) => {
-    const req = https.get(
-      url,
-      { headers: { "User-Agent": "Mozilla/5.0" } },
-      (res) => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
-          downloadBinary(res.headers.location, destPath)
-            .then(resolve)
-            .catch(reject);
-          return;
-        }
-        if (res.statusCode !== 200) {
-          reject(new Error(`Failed to download: ${res.statusCode}`));
-          return;
-        }
-        const file = fs.createWriteStream(destPath);
-        res.pipe(file);
-        file.on("finish", () => {
-          file.close();
-          resolve();
-        });
-      },
-    );
-    req.on("error", reject);
-  });
-}
-
-function extractArchive(archivePath, destDir, toolFile) {
-  return new Promise((resolve, reject) => {
-    try {
-      const ext = path.extname(archivePath);
-      let cmd = "";
-      if (process.platform === "win32") {
-        cmd = `tar -xf "${archivePath}" -C "${destDir}"`;
-      } else if (ext === ".zip") {
-        cmd = `unzip -o "${archivePath}" -d "${destDir}"`;
-      } else if (ext === ".xz" || ext === ".gz") {
-        cmd = `tar -xf "${archivePath}" -C "${destDir}"`;
-      }
-
-      const { exec } = require("child_process");
-      exec(cmd, (error) => {
-        if (error) {
-          // Fallback if extraction fails
-          reject(error);
-          return;
-        }
-
-        // Find the extracted executable (e.g. inside nested ffmpeg folders recursively)
-        const findAndMove = (dir) => {
-          const files = fs.readdirSync(dir, { withFileTypes: true });
-          for (let f of files) {
-            const fullPath = require("path").join(dir, f.name);
-            if (f.isDirectory()) {
-              findAndMove(fullPath);
-            } else if (
-              f.isFile() &&
-              f.name.includes("ffmpeg") &&
-              !f.name.includes("ffprobe") &&
-              !f.name.includes("ffmpeg.zip") &&
-              !f.name.includes("ffmpeg.tar")
-            ) {
-              const targetPath = require("path").join(destDir, toolFile);
-              if (fullPath !== targetPath) {
-                try {
-                  fs.copyFileSync(fullPath, targetPath);
-                } catch (e) {
-                  /* ignore */
-                }
-              }
-            }
-          }
-        };
-
-        // Simple move if found in subdirectories for ffmpeg (win/linux structure)
-        if (process.platform === "win32" || process.platform === "linux") {
-          try {
-            findAndMove(destDir);
-          } catch (e) {
-            /* ignore */
-          }
-        }
-        resolve();
-      });
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
-
 ipcMain.handle("download-dependencies", async (event, location) => {
-  if (!fs.existsSync(location)) {
-    fs.mkdirSync(location, { recursive: true });
-  }
-  userDependencyPath = location;
-  saveConfig({ userDependencyPath: location });
+  const dependencyPath = await prepareDependencyDirectory(location);
+  userDependencyPath = dependencyPath;
+  saveConfig({ userDependencyPath: dependencyPath });
 
   const platform = process.platform;
   let ytUrl = "";
@@ -911,111 +741,94 @@ ipcMain.handle("download-dependencies", async (event, location) => {
     archiveName = "ffmpeg.tar.xz";
   }
 
-  const ytDest = path.join(location, ytFile);
-  const archivePath = path.join(location, archiveName);
+  const ytDest = path.join(dependencyPath, ytFile);
+  const archivePath = path.join(dependencyPath, archiveName);
 
   await downloadBinary(ytUrl, ytDest);
   try {
     fs.chmodSync(ytDest, 0o755);
-  } catch (e) {
+  } catch {
     /* ignore */
   }
 
   await downloadBinary(ffUrl, archivePath);
-  await extractArchive(archivePath, location, ffFile);
+  await extractArchive(archivePath, dependencyPath, ffFile);
 
   // Cleanup archive and ensure execute permissions
   try {
-    const ffDest = path.join(location, ffFile);
+    const ffDest = path.join(dependencyPath, ffFile);
     if (fs.existsSync(ffDest)) fs.chmodSync(ffDest, 0o755);
     fs.unlinkSync(archivePath);
-  } catch (e) {
+  } catch {
     /* ignore */
   }
 
-  return { success: true, message: "Dependencies downloaded to " + location };
+  return {
+    success: true,
+    message: "Dependencies downloaded to " + dependencyPath,
+  };
 });
 
 ipcMain.handle("update-dependencies", async () => {
-  return new Promise((resolve, reject) => {
-    const ytdlpPath = getYtDlpPath();
+  const ytdlpInfo = await resolveYtDlp();
+  if (!ytdlpInfo.available) {
+    throw new Error("yt-dlp is not installed or not found");
+  }
 
-    let cmd = ytdlpPath;
-    let args = ["-U"];
+  const ytdlpPath = ytdlpInfo.path;
+  let command = ytdlpPath;
+  let args = ["-U"];
 
-    // Smart detection for package managers
-    if (
-      ytdlpPath.includes("homebrew") ||
-      ytdlpPath.includes("Cellar") ||
-      ytdlpPath.includes("/usr/local/bin")
-    ) {
-      cmd = "brew";
-      args = ["upgrade", "yt-dlp"];
-    } else if (
-      ytdlpPath.includes(".local/bin") ||
-      ytdlpPath.includes("pip") ||
-      ytdlpPath.includes("python") ||
-      ytdlpPath.includes("site-packages")
-    ) {
-      cmd = "pip3";
-      args = ["install", "--upgrade", "yt-dlp"];
+  // Smart detection for package managers.
+  if (
+    ytdlpPath.includes("homebrew") ||
+    ytdlpPath.includes("Cellar") ||
+    ytdlpPath.includes("/usr/local/bin")
+  ) {
+    command = "brew";
+    args = ["upgrade", "yt-dlp"];
+  } else if (
+    ytdlpPath.includes(".local/bin") ||
+    ytdlpPath.includes("pip") ||
+    ytdlpPath.includes("python") ||
+    ytdlpPath.includes("site-packages")
+  ) {
+    command = "pip3";
+    args = ["install", "--upgrade", "yt-dlp"];
+  }
+
+  try {
+    const result = await runCommand(command, args);
+    if (result.code === 0) {
+      return { success: true };
     }
 
-    const child = spawn(cmd, args);
-    let stderr = "";
+    const stderr = result.stderr.trim();
+    const output = stderr.toLowerCase();
 
-    child.stderr.on("data", (d) => (stderr += d.toString()));
+    if (output.includes("brew") && command !== "brew") {
+      const fallback = await runCommand("brew", ["upgrade", "yt-dlp"]);
+      if (fallback.code === 0) return { success: true };
+      throw new Error("Update failed via Homebrew. Please try downloading manually.");
+    }
 
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve({ success: true });
-      } else {
-        // Fallback strategies if our initial detection failed or command wasn't found
-        const output = stderr.toLowerCase();
+    if (output.includes("pip") && command !== "pip3") {
+      const fallback = await runCommand("pip3", ["install", "--upgrade", "yt-dlp"]);
+      if (fallback.code === 0) return { success: true };
+      throw new Error("Update failed via pip. Please try downloading manually.");
+    }
 
-        if (output.includes("brew") && cmd !== "brew") {
-          const fallback = spawn("brew", ["upgrade", "yt-dlp"]);
-          fallback.on("close", (fallbackCode) => {
-            if (fallbackCode === 0) resolve({ success: true });
-            else
-              reject(
-                new Error(
-                  "Update failed via Homebrew. Please try downloading manually.",
-                ),
-              );
-          });
-        } else if (output.includes("pip") && cmd !== "pip3") {
-          const fallback = spawn("pip3", ["install", "--upgrade", "yt-dlp"]);
-          fallback.on("close", (fallbackCode) => {
-            if (fallbackCode === 0) resolve({ success: true });
-            else
-              reject(
-                new Error(
-                  "Update failed via pip. Please try downloading manually.",
-                ),
-              );
-          });
-        } else {
-          reject(
-            new Error(
-              `Update failed (${code}). ${stderr || "Please try downloading manually."}`,
-            ),
-          );
-        }
-      }
-    });
+    throw new Error(
+      `Update failed (${result.code}). ${
+        stderr || "Please try downloading manually."
+      }`,
+    );
+  } catch (error) {
+    if (command !== ytdlpPath) {
+      const fallback = await runCommand(ytdlpPath, ["-U"]);
+      if (fallback.code === 0) return { success: true };
+    }
 
-    child.on("error", (err) => {
-      // If our smart-detected command (like 'brew' or 'pip3') isn't found in PATH, fallback to default -U natively
-      if (cmd !== ytdlpPath) {
-        const fallback = spawn(ytdlpPath, ["-U"]);
-        fallback.on("close", (fallbackCode) => {
-          if (fallbackCode === 0) resolve({ success: true });
-          else reject(new Error(`Update failed. ${err.message}`));
-        });
-      } else {
-        reject(new Error(`Update failed. ${err.message}`));
-      }
-    });
-  });
+    throw toError(error, "Update failed");
+  }
 });

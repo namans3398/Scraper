@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getVideoInfo: (url) => {
     // Validate input before sending to main process
     if (typeof url !== "string" || url.length > 2000) {
-      return Promise.reject({ error: "Invalid URL format" });
+      return Promise.reject(new Error("Invalid URL format"));
     }
     return ipcRenderer.invoke("get-video-info", url);
   },
@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    */
   downloadThumbnail: (data) => {
     if (!data || typeof data !== "object") {
-      return Promise.reject({ error: "Invalid thumbnail data" });
+      return Promise.reject(new Error("Invalid thumbnail data"));
     }
     if (
       typeof data.url !== "string" ||
@@ -36,7 +36,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
         data.outputPath !== undefined &&
         typeof data.outputPath !== "string")
     ) {
-      return Promise.reject({ error: "Invalid thumbnail parameters" });
+      return Promise.reject(new Error("Invalid thumbnail parameters"));
     }
     return ipcRenderer.invoke("download-thumbnail", data);
   },
@@ -47,14 +47,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
   downloadVideo: (data) => {
     // Validate input structure
     if (!data || typeof data !== "object") {
-      return Promise.reject({ error: "Invalid download data" });
+      return Promise.reject(new Error("Invalid download data"));
     }
     if (
       typeof data.url !== "string" ||
       typeof data.formatId !== "string" ||
       typeof data.outputPath !== "string"
     ) {
-      return Promise.reject({ error: "Invalid download parameters" });
+      return Promise.reject(new Error("Invalid download parameters"));
     }
     return ipcRenderer.invoke("download-video", data);
   },

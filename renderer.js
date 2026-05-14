@@ -728,7 +728,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (dependencyFolderSection)
           dependencyFolderSection.classList.remove("hidden");
         if (dependencyActionBtn)
-          dependencyActionBtn.textContent = "Download & Install";
+          dependencyActionBtn.textContent = "Install Missing Tools";
+        if (deps.configuredDependencyPath && dependencyPathInput) {
+          dependencyLocation = deps.configuredDependencyPath;
+          dependencyPathInput.value = deps.configuredDependencyPath;
+        }
       } else if (needsUpdate) {
         if (dependencyTitle) dependencyTitle.textContent = "Update Available";
         if (dependencyMessage)

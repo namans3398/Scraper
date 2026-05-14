@@ -14,9 +14,21 @@ interface ElectronAPI {
     outputPath: string;
   }) => Promise<{ success: boolean }>;
   cancelDownload: () => Promise<{ success: boolean }>;
-      checkDependencies: () => Promise<{ ytdlp: boolean, ffmpeg: boolean, ytdlpOutdated: boolean }>;
-      downloadDependencies: (location: string) => Promise<{ success: boolean, message: string }>;
-      updateDependencies: () => Promise<{ success: boolean }>;
+  checkDependencies: () => Promise<{
+    ytdlp: boolean;
+    ffmpeg: boolean;
+    ytdlpOutdated: boolean;
+    ytdlpPath?: string;
+    ffmpegPath?: string;
+    ytdlpVersion?: string;
+    latestYtDlpVersion?: string | null;
+    configuredDependencyPath?: string | null;
+  }>;
+  downloadDependencies: (location: string) => Promise<{
+    success: boolean;
+    message: string;
+  }>;
+  updateDependencies: () => Promise<{ success: boolean }>;
 
   onDownloadProgress: (callback: (data: string) => void) => () => void;
 }
