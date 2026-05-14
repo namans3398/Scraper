@@ -119,7 +119,7 @@
       }
     },
     "win": {
-      "icon": "Scraper Logo.PNG",
+      "icon": "icon.png",
       "target": [
         {
           "target": "nsis",
@@ -144,7 +144,7 @@
       "shortcutName": "Scraper"
     },
     "linux": {
-      "icon": "Scraper Logo.PNG",
+      "icon": "icon.png",
       "target": [
         {
           "target": "AppImage",
