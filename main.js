@@ -38,6 +38,23 @@ function getYtDlpPath() {
   return "yt-dlp";
 }
 
+function getFfmpegPath() {
+  const commonPaths = [
+    "/opt/homebrew/bin/ffmpeg",
+    "/usr/local/bin/ffmpeg",
+    "/usr/bin/ffmpeg",
+    path.join(process.env.HOME || "/tmp", ".local/bin/ffmpeg"),
+  ];
+
+  for (const ffmpegPath of commonPaths) {
+    if (fs.existsSync(ffmpegPath)) {
+      return ffmpegPath;
+    }
+  }
+
+  return "ffmpeg";
+}
+
 /**
  * @param {string} url
  * @returns {boolean}
@@ -312,23 +329,35 @@ function downloadFile(sourceUrl, destinationPath, redirectsRemaining = 5) {
 }
 
 // Utility: Check if yt-dlp is available
-function checkYtDlpAvailable() {
+/**
+ * @param {string} executablePath
+ * @param {string[]} args
+ * @returns {Promise<boolean>}
+ */
+function checkExecutableAvailable(executablePath, args) {
   return new Promise((resolve) => {
-    const ytdlpPath = getYtDlpPath();
-
-    const ytdlp = spawn(ytdlpPath, ["--version"], {
+    const child = spawn(executablePath, args, {
       stdio: "ignore",
       timeout: 10000,
     });
 
-    ytdlp.on("close", (code) => {
+    child.on("close", (code) => {
       resolve(code === 0);
     });
 
-    ytdlp.on("error", () => {
+    child.on("error", () => {
       resolve(false);
     });
   });
+}
+
+// Utility: Check if yt-dlp is available
+function checkYtDlpAvailable() {
+  return checkExecutableAvailable(getYtDlpPath(), ["--version"]);
+}
+
+function checkFfmpegAvailable() {
+  return checkExecutableAvailable(getFfmpegPath(), ["-version"]);
 }
 
 // Get video info
@@ -518,19 +547,19 @@ ipcMain.handle(
   async (event, { url, formatId, outputPath }) => {
     // Security: Validate inputs
     if (!url || typeof url !== "string" || !isValidYouTubeUrl(url)) {
-      throw { error: "Invalid URL provided" };
+      throw new Error("Invalid URL provided");
     }
 
     if (
       !formatId ||
       typeof formatId !== "string" ||
-      !/^[a-zA-Z0-9._-]+$/.test(formatId)
+      !/^[a-zA-Z0-9._+/-]+$/.test(formatId)
     ) {
-      throw { error: "Invalid format ID provided" };
+      throw new Error("Invalid format ID provided");
     }
 
     if (!outputPath || typeof outputPath !== "string") {
-      throw { error: "Invalid output path provided" };
+      throw new Error("Invalid output path provided");
     }
 
     // Security: Sanitize and validate output path
@@ -538,9 +567,9 @@ ipcMain.handle(
     try {
       safePath = normalizeOutputPath(outputPath);
     } catch (error) {
-      throw {
-        error: error instanceof Error ? error.message : "Invalid output path",
-      };
+      throw new Error(
+        error instanceof Error ? error.message : "Invalid output path"
+      );
     }
 
     try {
@@ -550,18 +579,28 @@ ipcMain.handle(
       }
       await fs.promises.access(safePath, fs.constants.W_OK);
     } catch {
-      throw { error: "Output path is not writable" };
+      throw new Error("Output path is not writable");
     }
 
     // Check if yt-dlp is available
     const ytdlpAvailable = await checkYtDlpAvailable();
     if (!ytdlpAvailable) {
-      throw { error: "yt-dlp is not installed or not found in PATH" };
+      throw new Error("yt-dlp is not installed or not found in PATH");
+    }
+
+    if (formatId.includes("+")) {
+      const ffmpegAvailable = await checkFfmpegAvailable();
+      if (!ffmpegAvailable) {
+        throw new Error(
+          "This format needs ffmpeg to merge video and audio. Install ffmpeg or choose a Video + Audio format."
+        );
+      }
     }
 
     return new Promise((resolve, reject) => {
       const filename = "%(title)s.%(ext)s";
       const outputTemplate = path.join(safePath, filename);
+      let stderr = "";
 
       // Security: Use array format to prevent command injection
       const ytdlpPath = getYtDlpPath();
@@ -594,6 +633,7 @@ ipcMain.handle(
 
       ytdlp.stderr.on("data", (data) => {
         const output = data.toString();
+        stderr += output;
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send("download-progress", output);
         }
@@ -605,13 +645,20 @@ ipcMain.handle(
         if (code === 0) {
           resolve({ success: true });
         } else {
-          reject({ error: `Download failed with exit code ${code}` });
+          const details = stderr.trim();
+          reject(
+            new Error(
+              `Download failed with exit code ${code}${
+                details ? `\n${details}` : ""
+              }`
+            )
+          );
         }
       });
 
       ytdlp.on("error", (error) => {
         activeDownloads.delete(downloadId);
-        reject({ error: `Failed to execute yt-dlp: ${error.message}` });
+        reject(new Error(`Failed to execute yt-dlp: ${error.message}`));
       });
     });
   }

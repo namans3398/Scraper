@@ -86,6 +86,24 @@ function sanitizeInput(input) {
   return input.trim().substring(0, 2000);
 }
 
+/**
+ * @param {unknown} err
+ * @param {string} fallback
+ * @returns {string}
+ */
+function getErrorMessage(err, fallback) {
+  if (err && typeof err === "object") {
+    if ("error" in err && typeof err.error === "string") {
+      return err.error;
+    }
+    if ("message" in err && typeof err.message === "string") {
+      return err.message;
+    }
+  }
+
+  return fallback;
+}
+
 // Fetch video info function
 /**
  * @param {string} url
@@ -133,8 +151,10 @@ async function fetchVideoInfo(url, fromHeader = false) {
   } catch (err) {
     hideLoading();
     showError(
-      (err && typeof err === "object" && "error" in err ? err.error : null) ||
+      getErrorMessage(
+        err,
         "Failed to fetch video information. Make sure yt-dlp is installed."
+      )
     );
   } finally {
     fetchBtn.disabled = false;
@@ -299,22 +319,33 @@ function displayFormats(formats) {
   resetSelectedFormat();
 
   // Filter and sort formats
-  const videoFormats = formats.filter(
+  const combinedVideoFormats = formats.filter(
     (f) => f.vcodec !== "none" && f.acodec !== "none"
+  );
+  const videoOnlyFormats = formats.filter(
+    (f) => f.vcodec !== "none" && f.acodec === "none"
   );
   const audioFormats = formats.filter(
     (f) => f.vcodec === "none" && f.acodec !== "none"
   );
 
-  if (videoFormats.length > 0) {
-    addFormatSection("Video + Audio", videoFormats);
+  if (combinedVideoFormats.length > 0) {
+    addFormatSection("Video + Audio", combinedVideoFormats);
+  }
+
+  if (videoOnlyFormats.length > 0) {
+    addFormatSection("Video Only + Best Audio", videoOnlyFormats);
   }
 
   if (audioFormats.length > 0) {
     addFormatSection("Audio Only", audioFormats);
   }
 
-  if (videoFormats.length === 0 && audioFormats.length === 0) {
+  if (
+    combinedVideoFormats.length === 0 &&
+    videoOnlyFormats.length === 0 &&
+    audioFormats.length === 0
+  ) {
     const emptyState = document.createElement("div");
     emptyState.className = "empty-state";
     emptyState.textContent = "No downloadable formats were found.";
@@ -382,7 +413,10 @@ function selectFormat(element, format) {
   });
 
   element.classList.add("selected");
-  selectedFormat = format.format_id;
+  selectedFormat =
+    format.vcodec !== "none" && format.acodec === "none"
+      ? `${format.format_id}+bestaudio/best`
+      : format.format_id;
   updateDownloadButton();
 }
 
@@ -411,10 +445,7 @@ downloadThumbnailBtn.addEventListener("click", async () => {
       return;
     }
   } catch (err) {
-    showError(
-      (err && typeof err === "object" && "error" in err ? err.error : null) ||
-        "Failed to download thumbnail."
-    );
+    showError(getErrorMessage(err, "Failed to download thumbnail."));
   } finally {
     downloadThumbnailBtn.disabled = !currentThumbnailUrl;
   }
@@ -430,10 +461,7 @@ selectFolderBtn.addEventListener("click", async () => {
       updateDownloadButton();
     }
   } catch (err) {
-    showError(
-      (err && typeof err === "object" && "error" in err ? err.error : null) ||
-        "Unable to select that folder."
-    );
+    showError(getErrorMessage(err, "Unable to select that folder."));
   }
 });
 
@@ -472,10 +500,10 @@ downloadBtn.addEventListener("click", async () => {
     }
   } catch (err) {
     if (isDownloading) {
-      progressOutput.textContent += `\nError: ${
-      (err && typeof err === "object" && "error" in err ? err.error : null) ||
+      progressOutput.textContent += `\nError: ${getErrorMessage(
+        err,
         "Unknown error"
-      }`;
+      )}`;
     }
   } finally {
     isDownloading = false;
@@ -506,10 +534,10 @@ cancelBtn.addEventListener("click", async () => {
       progressCleanup = null;
     }
   } catch (err) {
-    progressOutput.textContent += `\nError cancelling: ${
-      (err && typeof err === "object" && "error" in err ? err.error : null) ||
-        "Unknown error"
-    }`;
+    progressOutput.textContent += `\nError cancelling: ${getErrorMessage(
+      err,
+      "Unknown error"
+    )}`;
   }
 });
 
