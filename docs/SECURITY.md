@@ -1,57 +1,18 @@
 # Security Policy
 
-## Security Features
+## Supported Versions
 
-This application implements the following security measures:
-
-### Input Validation
-- All user inputs are validated and sanitized
-- YouTube URLs are validated against allowed domains
-- File paths are normalized and sanitized to prevent directory traversal
-- Format IDs and output paths are validated before use
-
-### Process Security
-- Uses `spawn` with array arguments to prevent command injection
-- No shell execution with user-controlled strings
-- Process timeouts to prevent hanging operations
-- Active download tracking and cleanup
-
-### Electron Security
-- Context isolation enabled
-- Node integration disabled in renderer
-- Sandbox mode enabled
-- Content Security Policy (CSP) implemented
-- Remote module disabled
-- Navigation restricted to prevent external site access
-- New window creation blocked (external links open in browser)
-- DevTools disabled in production builds
-
-### Data Security
-- Only necessary video metadata is exposed to renderer
-- Safe DOM text rendering prevents XSS attacks
-- Thumbnail URLs validated before display
-- No sensitive data stored or logged
+Currently, only the latest release is supported with security updates.
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please report it via:
-- GitHub Issues: https://github.com/namans3398/Scraper/issues (for non-critical issues)
-- Email: security@example.com (for critical vulnerabilities)
+If you discover a security vulnerability, please open an issue in the issue tracker or contact the maintainers directly depending on the repository's contact guidelines.
 
-Please include:
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if any)
+## Security Controls
 
-We will respond within 48 hours and work to address valid security concerns promptly.
+The application relies on standard Electron security features:
+-   **Context Isolation**: Enabled to separate the renderer process environment from the preload script.
+-   **Node.js Integration**: Disabled in the renderer process.
+-   **Content Security Policy (CSP)**: Defines the resources the application is allowed to load.
 
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-
-## Security Updates
-
-Security updates will be released as patch versions. Always use the latest version for the best security.
+All external inputs, such as URLs passes to `yt-dlp`, must be validated to mitigate command injection risks.
